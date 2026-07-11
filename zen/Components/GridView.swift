@@ -125,63 +125,58 @@ struct TranscriptCell: View {
     }
 
     var body: some View {
-        Text(text)
-            .foregroundColor(.black.opacity(0.75))
-            .font(displayFont.weight(.medium))
-            .fontDesign(.rounded)
-            .padding(12)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .background(.ultraThinMaterial, in: .rect(cornerRadius: 14))
-            .clipShape(.rect(cornerRadius: 14))
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(.white.opacity(0.2), lineWidth: 1)
-            )
-            .overlay(alignment: .bottomTrailing) {
-                if isHovering {
-                    HStack(spacing: 0) {
-                        Button(action: copyToClipboard) {
-                            Image(systemName: "doc.on.doc")
-                                .font(.system(size: 11, weight: .medium))
-                                .foregroundColor(.secondary)
-                                .frame(width: 28, height: 28)
-                        }
-                        .buttonStyle(.borderless)
-                        .help("Copy")
+        ZStack(alignment: .bottomTrailing) {
+            Text(text)
+                .foregroundColor(.black.opacity(0.75))
+                .font(displayFont.weight(.medium))
+                .fontDesign(.rounded)
+                .padding(12)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
-                        Divider()
-                            .frame(height: 14)
+            glassPill
+                .padding(10)
+                .opacity(isHovering ? 1 : 0)
+                .scaleEffect(isHovering ? 1 : 0.9)
+                .animation(.easeInOut(duration: 0.15), value: isHovering)
+        }
+        .background(.ultraThinMaterial, in: .rect(cornerRadius: 14))
+        .clipShape(.rect(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(.white.opacity(0.2), lineWidth: 1)
+        )
+        .onHover { hovering in
+            isHovering = hovering
+        }
+    }
 
-                        if let onDelete = onDelete {
-                            Button(action: onDelete) {
-                                Image(systemName: "trash")
-                                    .font(.system(size: 11, weight: .medium))
-                                    .foregroundColor(.secondary)
-                                    .frame(width: 28, height: 28)
-                            }
-                            .buttonStyle(.borderless)
-                            .help("Delete")
-                        }
-                    }
-                    .background(
-                        Circle()
-                            .fill(.ultraThinMaterial)
-                            .frame(width: 48, height: 48)
-                    )
-                    .overlay(
-                        Circle()
-                            .stroke(.white.opacity(0.15), lineWidth: 1)
-                            .frame(width: 48, height: 48)
-                    )
-                    .padding(8)
-                    .transition(.opacity.combined(with: .scale(scale: 0.85)))
-                }
+    private var glassPill: some View {
+        HStack(spacing: 0) {
+            Button(action: copyToClipboard) {
+                Image(systemName: "doc.on.doc")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.secondary)
+                    .frame(width: 30, height: 24)
             }
-            .onHover { hovering in
-                withAnimation(.easeInOut(duration: 0.15)) {
-                    isHovering = hovering
+            .buttonStyle(.borderless)
+            .help("Copy")
+
+            Divider()
+                .frame(height: 14)
+
+            if let onDelete = onDelete {
+                Button(action: onDelete) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.secondary)
+                        .frame(width: 30, height: 24)
                 }
+                .buttonStyle(.borderless)
+                .help("Delete")
             }
+        }
+        .padding(.horizontal, 4)
+
     }
 
     private func copyToClipboard() {

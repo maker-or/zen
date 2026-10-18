@@ -13,9 +13,15 @@ final class AudioRecorder: NSObject, ObservableObject {
     @Published var recordedFileURL: URL?
     @Published var audioLevel: Float = 0
 
-    private let tempDir = FileManager.default.temporaryDirectory
+    private let tempDir: URL
+
+    init(tempDirectory: URL = FileManager.default.temporaryDirectory) {
+        tempDir = tempDirectory
+        super.init()
+    }
 
     func startRecording() {
+        recordedFileURL = nil
         let audioEngine = AVAudioEngine()
         self.audioEngine = audioEngine
         self.inputNode = audioEngine.inputNode
@@ -23,14 +29,21 @@ final class AudioRecorder: NSObject, ObservableObject {
         let nativeFormat = inputNode!.outputFormat(forBus: 0)
         print("[AudioRecorder] Native format: \(nativeFormat)")
 
-        let fileURL = tempDir.appendingPathComponent("recording_raw_\(Int(Date().timeIntervalSince1970)).wav")
-        self.recordedFileURL = fileURL
+        let fileURL = tempDir.appendingPathComponent("recording_raw_\(UUID().uuidString).wav")
+
+        do {
+            try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        } catch {
+            print("[AudioRecorder] Failed to create recording directory: \(error.localizedDescription)")
+            return
+        }
 
         guard let audioFile = try? AVAudioFile(forWriting: fileURL, settings: nativeFormat.settings) else {
             print("[AudioRecorder] Failed to create audio file")
             return
         }
         self.audioFile = audioFile
+        self.recordedFileURL = fileURL
 
         inputNode!.installTap(onBus: 0, bufferSize: 4096, format: nil) { [weak self] buffer, _ in
             guard let self else { return }
@@ -77,7 +90,13 @@ final class AudioRecorder: NSObject, ObservableObject {
         }
     }
 
-    func stopRecording() {
+    /// Keeps the mic open for `tail` seconds before stopping, so the last word
+    /// isn't clipped when the hotkey is pressed right as speech ends, and the
+    /// tap's in-flight buffer gets written instead of dropped.
+    func stopRecording(tail: TimeInterval = 0.4) async {
+        if tail > 0, audioEngine != nil {
+            try? await Task.sleep(for: .seconds(tail))
+        }
         audioEngine?.stop()
         audioEngine?.inputNode.removeTap(onBus: 0)
         audioEngine = nil
@@ -94,7 +113,8 @@ final class AudioRecorder: NSObject, ObservableObject {
         }
 
         let srcFormat = sourceFile.processingFormat
-        guard srcFormat.commonFormat == .pcmFormatFloat32, srcFormat.channelCount == 1 else {
+        let channelCount = Int(srcFormat.channelCount)
+        guard srcFormat.commonFormat == .pcmFormatFloat32, channelCount >= 1 else {
             print("[AudioRecorder] Unexpected source format: \(srcFormat)")
             return nil
         }
@@ -107,20 +127,32 @@ final class AudioRecorder: NSObject, ObservableObject {
             return nil
         }
 
-        try? sourceFile.read(into: buffer)
+        do {
+            try sourceFile.read(into: buffer)
+        } catch {
+            print("[AudioRecorder] Failed to read recording: \(error.localizedDescription)")
+            return nil
+        }
         buffer.frameLength = AVAudioFrameCount(totalFrames)
 
         let srcRate = srcFormat.sampleRate
         let dstRate: Double = 16000
         let step = Float(srcRate / dstRate)
         let outputCount = Int(Float(totalFrames) / step) + 1
+        // Trailing silence gives the model right context for the final word;
+        // without it the last word is often dropped.
+        let paddingCount = Int(dstRate * 0.6)
 
-        var int16Samples = [Int16](repeating: 0, count: outputCount)
+        var int16Samples = [Int16](repeating: 0, count: outputCount + paddingCount)
 
         for i in 0..<outputCount {
             let srcIndex = Int(Float(i) * step)
             if srcIndex < Int(totalFrames) {
-                let sample = floatData.pointee[srcIndex]
+                var sample: Float = 0
+                for ch in 0..<channelCount {
+                    sample += floatData[ch][srcIndex]
+                }
+                sample /= Float(channelCount)
                 let clamped = max(-1.0, min(1.0, sample))
                 int16Samples[i] = Int16(clamped * 32767.0)
             }
@@ -128,27 +160,26 @@ final class AudioRecorder: NSObject, ObservableObject {
 
         print("[AudioRecorder] Converted \(totalFrames) frames → \(outputCount) Int16 samples")
 
-        let outputURL = tempDir.appendingPathComponent("recording_16khz_\(Int(Date().timeIntervalSince1970)).wav")
-        writeWAV(samples: int16Samples, sampleRate: 16000, to: outputURL)
-        return outputURL
+        let outputURL = tempDir.appendingPathComponent("recording_16khz_\(UUID().uuidString).wav")
+        do {
+            try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+            try writeWAV(samples: int16Samples, sampleRate: 16000, to: outputURL)
+            return outputURL
+        } catch {
+            print("[AudioRecorder] Failed to write converted recording: \(error.localizedDescription)")
+            return nil
+        }
     }
 
-    private func writeWAV(samples: [Int16], sampleRate: Double, to url: URL) {
-        FileManager.default.createFile(atPath: url.path, contents: nil)
-        guard let writer = try? FileHandle(forWritingTo: url) else {
-            print("[AudioRecorder] Failed to open output file")
-            return
-        }
-        defer { try? writer.close() }
-
-        let data = samples.withUnsafeBytes { Data($0) }
-        let dataSize = UInt32(data.count)
+    private func writeWAV(samples: [Int16], sampleRate: Double, to url: URL) throws {
+        let dataSize = UInt32(samples.count * MemoryLayout<Int16>.size)
         let sampleRateInt = UInt32(sampleRate)
         let byteRate = UInt32(sampleRate * 2)
         let blockAlign = UInt16(2)
         let bitsPerSample = UInt16(16)
 
         var header = Data()
+        header.reserveCapacity(44 + Int(dataSize))
         header.append(contentsOf: [0x52, 0x49, 0x46, 0x46]) // "RIFF"
         withUnsafeBytes(of: 36 + dataSize) { header.append(contentsOf: $0) }
         header.append(contentsOf: [0x57, 0x41, 0x56, 0x45]) // "WAVE"
@@ -163,7 +194,9 @@ final class AudioRecorder: NSObject, ObservableObject {
         header.append(contentsOf: [0x64, 0x61, 0x74, 0x61]) // "data"
         withUnsafeBytes(of: dataSize) { header.append(contentsOf: $0) }
 
-        try? writer.write(contentsOf: header)
-        try? writer.write(contentsOf: data)
+        samples.withUnsafeBytes { header.append(contentsOf: $0) }
+        // Publish the complete WAV in one atomic write. A failed write throws;
+        // conversion must never return a path that the transcriber cannot open.
+        try header.write(to: url, options: .atomic)
     }
 }

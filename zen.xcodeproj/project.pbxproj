@@ -6,8 +6,35 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		A01100000000000000000003 /* PhononCoreML in Frameworks */ = {isa = PBXBuildFile; productRef = A01100000000000000000002 /* PhononCoreML */; };
+		B33F6D832FF3D6810084E9A2 /* Voz in Frameworks */ = {isa = PBXBuildFile; productRef = B33F6D822FF3D6810084E9A2 /* Voz */; };
+		D0C000000000000000000001 /* ZenDockTilePlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = D0C000000000000000000003; };
+		D0C000000000000000000002 /* ZenDockTilePlugin in PlugIns */ = {isa = PBXBuildFile; fileRef = D0C000000000000000000004; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		D0C000000000000000000005 = {isa = PBXContainerItemProxy; containerPortal = B33F6D582FF3D67F0084E9A2; proxyType = 1; remoteGlobalIDString = D0C000000000000000000006; remoteInfo = ZenDockTilePlugin; };
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		D0C000000000000000000007 /* Embed Dock Plug-in */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (D0C000000000000000000002, );
+			name = "Embed Dock Plug-in";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		B33F6D602FF3D67F0084E9A2 /* zen.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = zen.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D0C000000000000000000003 /* ZenDockTilePlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ZenDockTilePlugin.m; sourceTree = "<group>"; };
+		D0C000000000000000000004 /* ZenDockTilePlugin.docktileplugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZenDockTilePlugin.docktileplugin; sourceTree = BUILT_PRODUCTS_DIR; };
+		D0C000000000000000000008 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		D0C000000000000000000016 /* Zen-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Configuration/Zen-Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -23,9 +50,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B33F6D832FF3D6810084E9A2 /* Voz in Frameworks */,
+				A01100000000000000000003 /* PhononCoreML in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D0C000000000000000000009 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -33,6 +63,8 @@
 			isa = PBXGroup;
 			children = (
 				B33F6D622FF3D67F0084E9A2 /* zen */,
+				D0C000000000000000000010 /* ZenDockTilePlugin */,
+				D0C000000000000000000016 /* Zen-Info.plist */,
 				B33F6D612FF3D67F0084E9A2 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,10 +73,12 @@
 			isa = PBXGroup;
 			children = (
 				B33F6D602FF3D67F0084E9A2 /* zen.app */,
+				D0C000000000000000000004 /* ZenDockTilePlugin.docktileplugin */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
+		D0C000000000000000000010 /* ZenDockTilePlugin */ = {isa = PBXGroup; children = (D0C000000000000000000003, D0C000000000000000000008, ); path = ZenDockTilePlugin; sourceTree = "<group>"; };
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -55,20 +89,35 @@
 				B33F6D5C2FF3D67F0084E9A2 /* Sources */,
 				B33F6D5D2FF3D67F0084E9A2 /* Frameworks */,
 				B33F6D5E2FF3D67F0084E9A2 /* Resources */,
+				D0C000000000000000000007 /* Embed Dock Plug-in */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				D0C000000000000000000011,
 			);
 			fileSystemSynchronizedGroups = (
 				B33F6D622FF3D67F0084E9A2 /* zen */,
 			);
 			name = zen;
 			packageProductDependencies = (
+				B33F6D822FF3D6810084E9A2 /* Voz */,
+				A01100000000000000000002 /* PhononCoreML */,
 			);
 			productName = zen;
 			productReference = B33F6D602FF3D67F0084E9A2 /* zen.app */;
 			productType = "com.apple.product-type.application";
+		};
+		D0C000000000000000000006 /* ZenDockTilePlugin */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D0C000000000000000000012;
+			buildPhases = (D0C000000000000000000013, D0C000000000000000000009, );
+			buildRules = ();
+			dependencies = ();
+			name = ZenDockTilePlugin;
+			productName = ZenDockTilePlugin;
+			productReference = D0C000000000000000000004;
+			productType = "com.apple.product-type.bundle";
 		};
 /* End PBXNativeTarget section */
 
@@ -78,7 +127,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2650;
-				LastUpgradeCheck = 2650;
+				LastUpgradeCheck = 2700;
 				TargetAttributes = {
 					B33F6D5F2FF3D67F0084E9A2 = {
 						CreatedOnToolsVersion = 26.5;
@@ -94,12 +143,17 @@
 			);
 			mainGroup = B33F6D572FF3D67F0084E9A2;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B33F6D812FF3D6810084E9A2 /* XCRemoteSwiftPackageReference "desert-ant-core" */,
+				A01100000000000000000001 /* XCRemoteSwiftPackageReference "phonon-coreml" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B33F6D612FF3D67F0084E9A2 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				B33F6D5F2FF3D67F0084E9A2 /* zen */,
+				D0C000000000000000000006 /* ZenDockTilePlugin */,
 			);
 		};
 /* End PBXProject section */
@@ -122,7 +176,12 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D0C000000000000000000013 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (D0C000000000000000000001, ); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		D0C000000000000000000011 = {isa = PBXTargetDependency; target = D0C000000000000000000006; targetProxy = D0C000000000000000000005; };
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		B33F6D692FF3D6800084E9A2 /* Debug */ = {
@@ -159,6 +218,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -183,6 +243,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -222,6 +283,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -239,6 +301,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 			};
 			name = Release;
@@ -246,17 +309,23 @@
 		B33F6D6C2FF3D6800084E9A2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = icon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 3;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = 8BBD6U48D6;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = zen;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app needs microphone access for speech-to-text";
+				INFOPLIST_FILE = Configuration/Zen-Info.plist;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app needs microphone access for speech-to-text";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -277,17 +346,23 @@ INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app needs microphone access f
 		B33F6D6D2FF3D6800084E9A2 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = icon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 3;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = 8BBD6U48D6;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = zen;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app needs microphone access for speech-to-text";
+				INFOPLIST_FILE = Configuration/Zen-Info.plist;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app needs microphone access for speech-to-text";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -302,6 +377,38 @@ INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app needs microphone access f
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		D0C000000000000000000014 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 8BBD6U48D6;
+				ENABLE_APP_SANDBOX = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ZenDockTilePlugin/Info.plist;
+				OTHER_LDFLAGS = ("$(inherited)", "-framework", AppKit, );
+				PRODUCT_BUNDLE_IDENTIFIER = pipper.dev.zen.docktile;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				WRAPPER_EXTENSION = docktileplugin;
+			};
+			name = Debug;
+		};
+		D0C000000000000000000015 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 8BBD6U48D6;
+				ENABLE_APP_SANDBOX = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ZenDockTilePlugin/Info.plist;
+				OTHER_LDFLAGS = ("$(inherited)", "-framework", AppKit, );
+				PRODUCT_BUNDLE_IDENTIFIER = pipper.dev.zen.docktile;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				WRAPPER_EXTENSION = docktileplugin;
 			};
 			name = Release;
 		};
@@ -326,7 +433,40 @@ INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app needs microphone access f
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		D0C000000000000000000012 = {isa = XCConfigurationList; buildConfigurations = (D0C000000000000000000014, D0C000000000000000000015, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A01100000000000000000001 /* XCRemoteSwiftPackageReference "phonon-coreml" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/fermionresearch/phonon-coreml";
+			requirement = {
+				kind = exactVersion;
+				version = 1.1.2;
+			};
+		};
+		B33F6D812FF3D6810084E9A2 /* XCRemoteSwiftPackageReference "desert-ant-core" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Desert-Ant-Labs/desert-ant-core.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A01100000000000000000002 /* PhononCoreML */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A01100000000000000000001 /* XCRemoteSwiftPackageReference "phonon-coreml" */;
+			productName = PhononCoreML;
+		};
+		B33F6D822FF3D6810084E9A2 /* Voz */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B33F6D812FF3D6810084E9A2 /* XCRemoteSwiftPackageReference "desert-ant-core" */;
+			productName = Voz;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = B33F6D582FF3D67F0084E9A2 /* Project object */;
 }

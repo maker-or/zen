@@ -16,12 +16,32 @@ final class ZenState: ObservableObject {
 
     @Published var transcriptionState: TranscriptionState = .idle
     @Published var transcriptHistory: [String] = []
+    @Published var hasCompletedOnboarding = false {
+        didSet { defaults.set(hasCompletedOnboarding, forKey: "hasCompletedOnboarding") }
+    }
+    @Published var transcriptionModel: TranscriptionModel = .voz {
+        didSet { defaults.set(transcriptionModel.rawValue, forKey: "transcriptionModel") }
+    }
+    @Published var isDarkMode: Bool = false {
+        didSet { defaults.set(isDarkMode, forKey: "isDarkMode") }
+    }
+
+    @Published var themeHex: String = "F5F3EF" {
+        didSet { defaults.set(themeHex, forKey: "themeHex") }
+    }
 
     private let historyURL: URL
+    private let defaults: UserDefaults
 
-    init() {
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
         let supportDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         historyURL = supportDir.appendingPathComponent("transcript_history.json")
+        hasCompletedOnboarding = defaults.bool(forKey: "hasCompletedOnboarding")
+        isDarkMode = defaults.bool(forKey: "isDarkMode")
+        themeHex = defaults.string(forKey: "themeHex") ?? (isDarkMode ? "191919" : "F5F3EF")
+        transcriptionModel = defaults.string(forKey: "transcriptionModel")
+            .flatMap(TranscriptionModel.init(rawValue:)) ?? .voz
         loadHistory()
     }
 

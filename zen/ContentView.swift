@@ -1,35 +1,121 @@
 import SwiftUI
+import AVFoundation
+
+enum AppTab: String {
+    case memos, transcribe
+}
 
 struct ContentView: View {
     @EnvironmentObject var appDelegate: AppDelegate
+    @StateObject private var state = ZenState.shared
+    @State private var showingSettings = false
+    @State private var settingsContentHeight: CGFloat = 300
+    private var theme: ZenTheme { ZenTheme(hex: state.themeHex) }
+    @State private var isMicDenied = false
+    // Bound explicitly: with SwiftUI's implicit selection the toolbar tabs could
+    // fall back to Memos when the window refreshed, e.g. after picking a file.
+    @SceneStorage("selectedTab") private var selectedTab: AppTab = .memos
 
     var body: some View {
         NavigationStack {
-            TabView {
-                Text("Home")
-                    .tabItem { Text("Home") }
-                Text("API")
-                    .tabItem { Text("API") }
-                Text("ChatGPT")
-                    .tabItem { Text("ChatGPT") }
-                GridView()
-                    .tabItem { Text("Grid") }
+            VStack(spacing: 0) {
+                if isMicDenied {
+                    HStack(spacing: 10) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.yellow)
+                        Text("Microphone access is required to record memos.")
+                            .font(.system(size: 12, weight: .medium))
+                        Spacer()
+                        Button("Open System Settings") {
+                            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone") {
+                                NSWorkspace.shared.open(url)
+                            }
+                        }
+                        .controlSize(.small)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color.yellow.opacity(0.15))
+                }
+
+                TabView(selection: $selectedTab) {
+                    GridView()
+                        .tabItem {
+                            Label("Memos", systemImage: "note.text")
+                        }
+                        .tag(AppTab.memos)
+
+                    TranscribeView()
+                        .tabItem {
+                            Label("Transcribe", systemImage: "waveform.badge.mic")
+                        }
+                        .tag(AppTab.transcribe)
+                }
             }
             .background(
-                VisualEffectView(material: .fullScreenUI, blendingMode: .withinWindow)
+                theme.background
                     .ignoresSafeArea()
             )
-        }
-        .toolbar {
-            ToolbarItemGroup(placement: .status) {
-                Button(action: {}) {
-                    Image(systemName: "sparkle")
-                }
-                Button(action: {}) {
-                    Image(systemName: "shuffle")
-                }
+            .onAppear {
+                checkMicPermission()
             }
         }
+        .toolbar {
+            ToolbarItemGroup(placement: .confirmationAction) {
+                Button(action: {
+                    showingSettings.toggle()
+                }) {
+                    Image(systemName: "paintbrush.fill")
+                }
+                .help("Appearance")
+                .accessibilityLabel("Appearance")
+
+                SettingsLink {
+                    Image(systemName: "gearshape.fill")
+                }
+                .help("Settings (⌘,)")
+                .accessibilityLabel("Settings")
+            }
+        }
+        .overlay(alignment: .topTrailing) {
+            if showingSettings {
+                ZStack(alignment: .topTrailing) {
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture { showingSettings = false }
+
+                    GeometryReader { geometry in
+                        ScrollView {
+                            ThemeSettingsView(state: state)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .onGeometryChange(for: CGFloat.self) { proxy in
+                                    proxy.size.height
+                                } action: { height in
+                                    settingsContentHeight = height
+                                }
+                        }
+                        .scrollBounceBehavior(.basedOnSize)
+                        .frame(width: 340, height: min(settingsContentHeight, max(0, geometry.size.height - 24)))
+                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .glassEffect(.regular, in: .rect(cornerRadius: 20, style: .continuous))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                    }
+                    .padding(12)
+                }
+                .onExitCommand { showingSettings = false }
+            }
+        }
+        .environment(\.zenTheme, theme)
+        .foregroundStyle(theme.foreground)
+        .tint(theme.foreground)
+        .toolbarBackground(theme.background, for: .windowToolbar)
+        .toolbarBackgroundVisibility(.visible, for: .windowToolbar)
+        .preferredColorScheme(theme.isDark ? .dark : .light)
+    }
+
+    private func checkMicPermission() {
+        let status = AVCaptureDevice.authorizationStatus(for: .audio)
+        isMicDenied = (status == .denied || status == .restricted)
     }
 }
 

@@ -1,0 +1,33 @@
+{
+  "originHash" : "6b1af310f86294529a70dc8fb8bddf4a2dfa79cb9603fea20ac7508a23f8fc30",
+  "pins" : [
+    {
+      "identity" : "desert-ant-core",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Desert-Ant-Labs/desert-ant-core.git",
+      "state" : {
+        "revision" : "9e11fdf9566df2e34b9516ac76403b1ff0f839d8",
+        "version" : "3.1.0"
+      }
+    },
+    {
+      "identity" : "phonon-coreml",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/fermionresearch/phonon-coreml",
+      "state" : {
+        "revision" : "bf59e574639b060e30ee1a3f9c0e003fed5744c8",
+        "version" : "1.1.2"
+      }
+    },
+    {
+      "identity" : "swift-numerics",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-numerics",
+      "state" : {
+        "revision" : "0c0290ff6b24942dadb83a929ffaaa1481df04a2",
+        "version" : "1.1.1"
+      }
+    }
+  ],
+  "version" : 3
+}

@@ -12,22 +12,21 @@ const dmg = "https://github.com/maker-or/zen/releases/latest/download/Zen.dmg";
       <h1><a href="/" aria-label="Zen home"><span class="wordmark"></span></a></h1>
 
       <ol>
-        <!-- Zen isn't notarized, so macOS refuses a downloaded zen.dmg on a
-             double-click. Clearing its quarantine first lets it open, and the
-             app copied out of it carries no quarantine either. -->
         <li>
           <span class="n">1</span>
+          <div>open <mark>zen.dmg</mark> and drag zen into applications.</div>
+        </li>
+        <!-- Zen isn't notarized, so macOS won't open the copy in Applications
+             until its download quarantine is cleared. -->
+        <li>
+          <span class="n">2</span>
           <div>
-            copy this command and paste it into <mark>terminal</mark>:
+            copy this command and paste it into terminal:
             <div class="command">
-              <code id="command">cd ~/Downloads && xattr -c Zen.dmg && open Zen.dmg</code>
+              <code id="command">xattr -cr /Applications/Zen.app</code>
               <button type="button" id="copy">copy</button>
             </div>
           </div>
-        </li>
-        <li>
-          <span class="n">2</span>
-          <div>in the window that opens, drag zen into applications.</div>
         </li>
         <li>
           <span class="n">3</span>

@@ -145,7 +145,10 @@ fi
 step "Packaging $name.dmg"
 ln -s /Applications "$dist/staging/dmg/Applications"
 hdiutil create -volname "Zen" -srcfolder "$dist/staging/dmg" -fs HFS+ -format UDZO -ov -quiet "$dist/$name.dmg"
-sign "$dist/$name.dmg"
+# Only a Developer ID signature helps a disk image. macOS vets a signed image
+# when it's opened and always rejects an ad-hoc one ("Zen.dmg" Not Opened),
+# while an unsigned image mounts and leaves the check to Zen.app.
+[[ $identity != "-" ]] && sign "$dist/$name.dmg"
 
 if [[ $notarize == 1 ]]; then
     step "Notarizing $name.dmg"
@@ -162,4 +165,4 @@ rm -rf "$dist/staging"
 step "Done"
 echo "  $dist/$name.dmg"
 echo "  SHA-256 $(shasum -a 256 "$dist/$name.dmg" | cut -d' ' -f1)"
-[[ $notarize == 1 ]] || echo "  Not notarized: other Macs will block this DMG. Run without --skip-notarize/--adhoc to release."
+[[ $notarize == 1 ]] || echo "  Not notarized: other Macs will block Zen.app until its quarantine is cleared (xattr -cr /Applications/Zen.app)."

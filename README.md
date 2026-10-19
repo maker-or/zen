@@ -164,7 +164,7 @@ scripts/release.sh
 
 Raise `MARKETING_VERSION` or `CURRENT_PROJECT_VERSION` in the project before each release. Testers then get a new file name, and the build number increases. The script picks the only Developer ID Application identity in your keychain. If you have several, set `ZEN_SIGNING_IDENTITY`. Set `ZEN_NOTARY_PROFILE` to use a profile other than `zen-notary`. Notarization usually takes a few minutes per submission, and there are two submissions: the app, then the DMG.
 
-`scripts/release.sh --skip-notarize` signs and packages without notarizing. `--adhoc` is a local dry run with no certificate. Neither DMG will open on other Macs without a Gatekeeper warning.
+`scripts/release.sh --skip-notarize` signs and packages without notarizing. `--adhoc` builds without a certificate and leaves the DMG unsigned: it opens anywhere, but Zen.app won't open on other Macs until `xattr -cr /Applications/Zen.app` clears its quarantine. An ad-hoc signed DMG wouldn't open at all.
 
 ## Website
 

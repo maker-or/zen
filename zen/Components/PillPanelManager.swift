@@ -18,7 +18,6 @@ final class PillPanelManager {
     private let recorder = AudioRecorder.shared
     private let transcriber = TranscriptionService.shared
     private let state = ZenState.shared
-    private var lastHotkeyPress: Date = .distantPast
 
     private init() {}
 
@@ -60,13 +59,6 @@ final class PillPanelManager {
     func handleHotkey() {
         hideWorkItem?.cancel()
         hideWorkItem = nil
-
-        let now = Date()
-        guard now.timeIntervalSince(lastHotkeyPress) > 0.3 else {
-            print("[PillPanel] Ignoring rapid hotkey retrigger")
-            return
-        }
-        lastHotkeyPress = now
 
         print("[PillPanel] Hotkey pressed, current state: \(state.transcriptionState)")
 

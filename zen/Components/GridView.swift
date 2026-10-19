@@ -23,7 +23,7 @@ struct GridView: View {
                         Text("No transcripts yet")
                             .foregroundColor(theme.foreground)
                             .font(.system(size: 15))
-                        Text("Press Option+Space to record")
+                        Text("Press \(state.recordingShortcut.displayString) to record")
                             .foregroundColor(theme.foreground.opacity(0.7))
                             .font(.system(size: 12))
                     }
@@ -33,15 +33,15 @@ struct GridView: View {
                     let columns = calculateColumns(for: geometry.size.width)
 
                     LazyVGrid(columns: columns, spacing: MemoGridZoom.spacing) {
-                        ForEach(state.transcriptHistory, id: \.self) { text in
+                        ForEach(state.transcriptHistory) { memo in
                             TranscriptCell(
                                 baseSize: cellSize,
-                                text: text,
+                                text: memo.text,
                                 onDelete: {
-                                    state.removeFromHistory(text)
+                                    state.removeMemo(id: memo.id)
                                 }
                             )
-                            .matchedGeometryEffect(id: text, in: zoomNamespace, anchor: .topLeading)
+                            .matchedGeometryEffect(id: memo.id, in: zoomNamespace, anchor: .topLeading)
                         }
                     }
                     .padding(MemoGridZoom.padding)

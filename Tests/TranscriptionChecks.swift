@@ -11,21 +11,24 @@ struct TranscriptionChecks {
         let suiteName = "ZenTranscriptionChecks.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         defer { defaults.removePersistentDomain(forName: suiteName) }
-        let state = ZenState(defaults: defaults)
+        let scratch = FileManager.default.temporaryDirectory.appendingPathComponent(suiteName)
+        defer { try? FileManager.default.removeItem(at: scratch) }
+        let storage = ZenStorage(applicationSupport: scratch)
+        let state = ZenState(defaults: defaults, storage: storage)
         precondition(state.autoPasteEnabled, "Automatic paste defaults to enabled, subject to Accessibility permission")
         state.autoPasteEnabled = false
-        precondition(!ZenState(defaults: defaults).autoPasteEnabled, "Disabling automatic paste must persist")
+        precondition(!ZenState(defaults: defaults, storage: storage).autoPasteEnabled, "Disabling automatic paste must persist")
         state.autoPasteEnabled = true
         precondition(!state.hasCompletedOnboarding, "First launch must show onboarding")
         state.hasCompletedOnboarding = true
-        precondition(ZenState(defaults: defaults).hasCompletedOnboarding, "Completed onboarding must stay dismissed after relaunch")
+        precondition(ZenState(defaults: defaults, storage: storage).hasCompletedOnboarding, "Completed onboarding must stay dismissed after relaunch")
         precondition(state.transcriptionModel == .voz, "Existing installations must default to Voz")
         state.transcriptionModel = .phonon2
-        precondition(ZenState(defaults: defaults).transcriptionModel == .phonon2, "Selection must survive relaunch")
+        precondition(ZenState(defaults: defaults, storage: storage).transcriptionModel == .phonon2, "Selection must survive relaunch")
         state.transcriptionModel = .voz
-        precondition(ZenState(defaults: defaults).transcriptionModel == .voz, "Switching back must persist")
+        precondition(ZenState(defaults: defaults, storage: storage).transcriptionModel == .voz, "Switching back must persist")
         defaults.set("unknown-future-model", forKey: "transcriptionModel")
-        precondition(ZenState(defaults: defaults).transcriptionModel == .voz, "Unknown settings must fall back to Voz")
+        precondition(ZenState(defaults: defaults, storage: storage).transcriptionModel == .voz, "Unknown settings must fall back to Voz")
         precondition(TranscriptSegment.group([]).isEmpty)
         let words = [
             TranscriptWord(text: "Hello", start: 0, end: 0.5),

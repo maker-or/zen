@@ -74,7 +74,7 @@ final class AutoPasteService: ObservableObject {
         let original = destination
         destination = nil // A result may be delivered only once.
         // Give the receiving app time to see the new clipboard and let the
-        // Option+Space key-up finish before sending the native paste shortcut.
+        // recording shortcut's key-up finish before sending the native paste shortcut.
         do { try await Task.sleep(for: .milliseconds(100)) }
         catch { return false }
         refreshPermission()
@@ -141,8 +141,9 @@ struct SystemPasteAccess: PasteAccess {
         guard let source = CGEventSource(stateID: .combinedSessionState),
               let down = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(kVK_ANSI_V), keyDown: true),
               let up = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(kVK_ANSI_V), keyDown: false) else { return nil }
-        // Explicit flags prevent the recording shortcut's Option modifier from
-        // turning this into Option-Command-V. Never send Return or submit forms.
+        // Explicit flags prevent modifiers still held from the recording
+        // shortcut (e.g. Option) from turning this into Option-Command-V.
+        // Never send Return or submit forms.
         let command = CGEventFlags(rawValue: CGEventFlags.maskCommand.rawValue | 0x000008)
         down.flags = command
         up.flags = command

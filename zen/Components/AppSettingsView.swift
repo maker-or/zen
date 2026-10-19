@@ -6,6 +6,7 @@ struct AppSettingsView: View {
     @ObservedObject private var state = ZenState.shared
     @ObservedObject private var service = TranscriptionService.shared
     @ObservedObject private var autoPaste = AutoPasteService.shared
+    @ObservedObject private var hotkey = HotkeyManager.shared
     @State private var testText = ""
 
     private var model: TranscriptionModel { state.transcriptionModel }
@@ -20,6 +21,20 @@ struct AppSettingsView: View {
     var body: some View {
         Form {
             Section {
+                LabeledContent("Start and stop recording") {
+                    ShortcutRecorder()
+                }
+                if let error = hotkey.registrationError {
+                    Label(error, systemImage: "exclamationmark.triangle")
+                        .foregroundStyle(.secondary)
+                }
+            } header: {
+                Text("Recording shortcut")
+            } footer: {
+                Text("Works from any app. Click the shortcut, then press a new key combination.")
+            }
+
+            Section {
                 Toggle("Paste after recording", isOn: $state.autoPasteEnabled)
                 if autoPaste.isTrusted {
                     Label("Accessibility enabled", systemImage: "checkmark.circle.fill")
@@ -32,7 +47,7 @@ struct AppSettingsView: View {
                     state.autoPasteEnabled = true
                     AccessibilityPermissionGuide.shared.show()
                 }
-                TextField("Click here, then press ⌥ Space to test", text: $testText)
+                TextField("Click here, then press \(state.recordingShortcut.displayString) to test", text: $testText)
                     .textFieldStyle(.roundedBorder)
                     .accessibilityLabel("Test automatic paste")
                 if let message = autoPaste.deliveryMessage {
@@ -92,7 +107,7 @@ struct AppSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 500, height: 580)
+        .frame(width: 500, height: 640)
         .onAppear { autoPaste.refreshPermission() }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             autoPaste.refreshPermission()

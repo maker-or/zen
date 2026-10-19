@@ -203,6 +203,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         HotkeyManager.shared.onToggle = {
             PillPanelManager.shared.handleHotkey()
         }
-        HotkeyManager.shared.register()
+        HotkeyManager.shared.activate()
     }
 }

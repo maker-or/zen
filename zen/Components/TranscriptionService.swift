@@ -11,8 +11,6 @@ final class TranscriptionService: ObservableObject {
     @Published var isTranscribing = false
     @Published var transcript = ""
     @Published var error: String?
-    @Published var isModelDownloading = false
-    @Published var modelDownloadProgress: Double = 0
     @Published private(set) var modelStates: [TranscriptionModel: ModelState] = [:]
 
     enum ModelState: Equatable {
@@ -119,10 +117,7 @@ final class TranscriptionService: ObservableObject {
 
     private func loadVoz() async throws -> Voz {
         modelStates[.voz] = .loading
-        defer {
-            downloadProgressHandlers = []
-            isModelDownloading = false
-        }
+        defer { downloadProgressHandlers = [] }
 
         if let path = verifiedModelPath {
             do {
@@ -143,8 +138,6 @@ final class TranscriptionService: ObservableObject {
             let fraction = progress.fraction
             Task { @MainActor [weak self] in
                 guard let self, self.vozInstance == nil else { return }
-                self.isModelDownloading = true
-                self.modelDownloadProgress = fraction
                 self.modelStates[.voz] = fraction < 1 ? .downloading(fraction) : .loading
                 self.downloadProgressHandlers.forEach { $0(fraction) }
             }
@@ -262,9 +255,9 @@ final class TranscriptionService: ObservableObject {
     }
 
     private func saveLocally(_ text: String) {
-        guard let supportDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }
-        let transcriptDir = supportDir.appendingPathComponent("Transcripts", isDirectory: true)
-        try? FileManager.default.createDirectory(at: transcriptDir, withIntermediateDirectories: true)
+        let storage = ZenState.shared.storage
+        storage.createDirectories()
+        let transcriptDir = storage.transcriptsDirectory
 
         let date = ISO8601DateFormatter().string(from: Date())
         let fileURL = transcriptDir.appendingPathComponent("transcript_\(date).txt")

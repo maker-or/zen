@@ -17,6 +17,7 @@ if not (products / "PhononCoreML.o").is_file():
     sys.exit("Build Release first: xcodebuild -project zen.xcodeproj -scheme zen -configuration Release -derivedDataPath build build CODE_SIGNING_ALLOWED=NO")
 sources = [
     "zen/model/TranscriptionModel.swift", "zen/model/Transcript.swift",
+    "zen/model/RecordingShortcut.swift", "zen/model/ZenStorage.swift", "zen/model/Memo.swift",
     "zen/Components/ZenState.swift", "zen/Components/PhononEngine.swift",
     "zen/Components/AudioRecorder.swift",
     "zen/Components/TranscriptionService.swift", "Tests/TranscriptionChecks.swift",
@@ -30,7 +31,7 @@ with tempfile.TemporaryDirectory(prefix="zen-transcription-checks-") as scratch:
         "-I", str(products), "-I", str(root / "build/SourcePackages/checkouts/phonon-coreml/Binaries/PhononTDT.xcframework/macos-arm64_x86_64/Headers"),
         "-L", str(products), "-lPhononTDT", "-lc++",
     ]
-    for framework in ["Accelerate", "CoreML", "AVFoundation", "AppKit"]:
+    for framework in ["Accelerate", "CoreML", "AVFoundation", "AppKit", "Carbon"]:
         command.extend(["-framework", framework])
     command.extend(str(root / source) for source in sources)
     command.extend(str(obj) for obj in products.glob("*.o"))

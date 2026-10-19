@@ -1,36 +1,92 @@
 import Cocoa
 import Carbon
+import Combine
 
+/// Registers the user's recording shortcut as a global Carbon hotkey. This
+/// is the only place hotkey presses are debounced.
 @MainActor
-final class HotkeyManager {
+final class HotkeyManager: ObservableObject {
     static let shared = HotkeyManager()
 
     var onToggle: (() -> Void)?
 
+    /// Set when the saved shortcut couldn't be registered at launch, e.g.
+    /// because another app already owns it.
+    @Published private(set) var registrationError: String?
+
     private var hotKeyRef: EventHotKeyRef?
     private var eventHandlerRef: EventHandlerRef?
     private var localMonitor: Any?
-    private let signature: OSType = 0x5A454E21 // "ZEN!"
+    nonisolated private static let signature: OSType = 0x5A454E21 // "ZEN!"
+    nonisolated private static let hotKeyID: UInt32 = 1
     private var lastTriggerUptime: TimeInterval = 0
+    private var isActive = false
+    private var suspensionCount = 0
+    private let state = ZenState.shared
+
+    private init() {}
 
     func triggerToggle() {
         let now = ProcessInfo.processInfo.systemUptime
-        // Debounce by 350ms to prevent duplicate triggers between Carbon and NSEvent
+        // Debounce by 350ms to absorb key repeat and a press seen by both
+        // the Carbon hotkey and the local monitor.
         guard now - lastTriggerUptime > 0.35 else { return }
         lastTriggerUptime = now
         print("[Hotkey] Triggering hotkey toggle")
         onToggle?()
     }
 
-    func register() {
-        unregister()
+    /// Start listening for the saved shortcut. Called once onboarding is done.
+    func activate() {
+        isActive = true
+        installHandlers()
+        if let error = registerHotKey(state.recordingShortcut) {
+            registrationError = error
+        }
+    }
 
-        // 1. Carbon Global Hotkey (interception across all applications, no accessibility permission needed)
+    /// Validates, registers and saves a new shortcut. On failure the previous
+    /// shortcut stays registered and saved, and the reason is returned.
+    func setShortcut(_ shortcut: RecordingShortcut) -> String? {
+        if let error = shortcut.validationError { return error }
+        let previous = state.recordingShortcut
+        if isActive {
+            if let error = registerHotKey(shortcut) {
+                if suspensionCount == 0 { _ = registerHotKey(previous) }
+                return error
+            }
+            // A recorder that's still listening re-registers on resume().
+            if suspensionCount > 0 { unregisterHotKey() }
+        }
+        state.recordingShortcut = shortcut
+        registrationError = nil
+        return nil
+    }
+
+    /// Pause the hotkey while a shortcut recorder listens, so pressing the
+    /// current shortcut doesn't start a recording. Balance with `resume()`.
+    func suspend() {
+        suspensionCount += 1
+        if suspensionCount == 1 { unregisterHotKey() }
+    }
+
+    func resume() {
+        guard suspensionCount > 0 else { return }
+        suspensionCount -= 1
+        guard suspensionCount == 0, isActive else { return }
+        registrationError = registerHotKey(state.recordingShortcut)
+    }
+
+    private func installHandlers() {
+        guard eventHandlerRef == nil else { return }
+
         var eventType = EventTypeSpec(
             eventClass: OSType(kEventClassKeyboard),
             eventKind: UInt32(kEventHotKeyPressed)
         )
 
+        // Carbon hotkeys work across all applications without Accessibility
+        // or Input Monitoring permission.
         let handler: EventHandlerUPP = { _, event, _ in
             guard let event else { return noErr }
             var hkID = EventHotKeyID()
@@ -43,8 +99,7 @@ final class HotkeyManager {
                 nil,
                 &hkID
             )
-            if err == noErr && hkID.signature == 0x5A454E21 && hkID.id == 1 {
-                print("[Hotkey] Option+Space pressed globally via Carbon")
+            if err == noErr && hkID.signature == HotkeyManager.signature && hkID.id == HotkeyManager.hotKeyID {
                 DispatchQueue.main.async {
                     HotkeyManager.shared.triggerToggle()
                 }
@@ -52,62 +107,47 @@ final class HotkeyManager {
             return noErr
         }
 
-        let dispatcherTarget = GetEventDispatcherTarget()
-
         let installStatus = InstallEventHandler(
-            dispatcherTarget,
-            handler,
-            1,
-            &eventType,
-            nil,
-            &eventHandlerRef
+            GetEventDispatcherTarget(), handler, 1, &eventType, nil, &eventHandlerRef
         )
-
         if installStatus != noErr {
             print("[Hotkey] Failed to install event handler (error \(installStatus))")
         }
 
-        let hotKeyID = EventHotKeyID(signature: signature, id: 1)
-        let regStatus = RegisterEventHotKey(
-            UInt32(kVK_Space),
-            UInt32(optionKey),
-            hotKeyID,
-            dispatcherTarget,
-            0,
-            &hotKeyRef
-        )
-
-        if regStatus != noErr {
-            print("[Hotkey] Failed to register Option+Space (error \(regStatus))")
-        } else {
-            print("[Hotkey] Successfully registered Option+Space as global hotkey")
-        }
-
-        // 2. Local NSEvent monitor (fallback when Zen itself is active/focused)
+        // Fallback for when Zen itself is active and focused.
         localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-            if modifiers == .option && event.keyCode == UInt16(kVK_Space) {
-                print("[Hotkey] Option+Space detected via local NSEvent monitor")
-                self?.triggerToggle()
-                return nil
-            }
-            return event
+            guard let self, self.hotKeyRef != nil, self.state.recordingShortcut.matches(event) else { return event }
+            self.triggerToggle()
+            return nil
         }
     }
 
-    func unregister() {
+    /// Replaces any registered hotkey. Returns a user-facing error on failure.
+    private func registerHotKey(_ shortcut: RecordingShortcut) -> String? {
+        unregisterHotKey()
+        let status = RegisterEventHotKey(
+            shortcut.keyCode,
+            shortcut.modifiers,
+            EventHotKeyID(signature: Self.signature, id: Self.hotKeyID),
+            GetEventDispatcherTarget(),
+            0,
+            &hotKeyRef
+        )
+        guard status == noErr else {
+            hotKeyRef = nil
+            print("[Hotkey] Failed to register \(shortcut.spokenDescription) (error \(status))")
+            return status == eventHotKeyExistsErr
+                ? "\(shortcut.displayString) is already in use by another app."
+                : "Couldn’t register \(shortcut.displayString) (error \(status))."
+        }
+        print("[Hotkey] Registered \(shortcut.spokenDescription) as global hotkey")
+        return nil
+    }
+
+    private func unregisterHotKey() {
         if let hotKeyRef {
             UnregisterEventHotKey(hotKeyRef)
             self.hotKeyRef = nil
         }
-        if let eventHandlerRef {
-            RemoveEventHandler(eventHandlerRef)
-            self.eventHandlerRef = nil
-        }
-        if let localMonitor {
-            NSEvent.removeMonitor(localMonitor)
-            self.localMonitor = nil
-        }
     }
 }
-

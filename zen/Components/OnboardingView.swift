@@ -88,6 +88,11 @@ struct OnboardingView: View {
                     .frame(maxWidth: 560, alignment: .leading)
                     .onboardingReveal(index: 8)
 
+                if step == .capture {
+                    ShortcutRecorder(style: .onboarding)
+                        .onboardingReveal(index: 9)
+                }
+
                 if step == .models {
                     OnboardingModelPicker(state: state, service: service, isPreparing: isPreparingModel)
                         .onboardingReveal(index: 8)
@@ -188,7 +193,7 @@ struct OnboardingView: View {
     private var headline: String {
         switch step {
         case .welcome: return "Type at the speed\nof your thoughts"
-        case .capture: return "Press ⌥ + Space"
+        case .capture: return "Press \(state.recordingShortcut.spokenDescription)"
         case .privacy: return "Your voice stays\non your Mac."
         case .models: return "Choose your\nspeech model."
         case .paste: return "Speak your words.\nWrite them anywhere."
@@ -206,7 +211,7 @@ struct OnboardingView: View {
         switch step {
         case .welcome: return ""
         case .capture:
-            return "Option + Space starts and stops recording from any app.\nYour words can paste into the focused input and are always copied and saved to Memos."
+            return "\(state.recordingShortcut.spokenDescription) starts and stops recording from any app.\nYour words can paste into the focused input and are always copied and saved to Memos."
         case .privacy:
             return "Your audio is transcribed on this device.\nYour recordings are never sent to a server."
         case .models:
@@ -216,7 +221,7 @@ struct OnboardingView: View {
         case .microphone:
             switch microphoneStatus {
             case .authorized:
-                return "Use Option + Space whenever you’re ready to record."
+                return "Use \(state.recordingShortcut.spokenDescription) whenever you’re ready to record."
             case .denied:
                 return "Allow Zen in System Settings → Privacy & Security → Microphone, or continue with file transcription."
             case .restricted:

@@ -50,11 +50,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         if let index = arguments.firstIndex(of: "--demo-onboarding") {
             let requestID = arguments.indices.contains(index + 1)
                 ? UUID(uuidString: arguments[index + 1]) ?? UUID() : UUID()
-            // Seed the first SwiftUI render before the main window exists.
-            pendingDemoRequestID = requestID
-            lastHandledDemoRequestID = requestID
-            demoOnboardingSessionID = requestID
-            isDemoIntroPlaying = true
+            seedLaunchIntro(requestID: requestID)
+        } else if !state.hasCompletedOnboarding {
+            // A real first launch opens with the same intro before the
+            // walkthrough; finishing the walkthrough saves completion as usual.
+            seedLaunchIntro(requestID: UUID())
         }
         DistributedNotificationCenter.default().addObserver(
             self, selector: #selector(receiveDemoRequest(_:)),
@@ -63,6 +63,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
     deinit {
         DistributedNotificationCenter.default().removeObserver(self)
+    }
+
+    /// Seed the first SwiftUI render before the main window exists, so the
+    /// intro plays once launch finishes and the main app never flashes first.
+    private func seedLaunchIntro(requestID: UUID) {
+        pendingDemoRequestID = requestID
+        lastHandledDemoRequestID = requestID
+        demoOnboardingSessionID = requestID
+        isDemoIntroPlaying = true
     }
 
     @objc nonisolated private func receiveDemoRequest(_ notification: Notification) {
@@ -82,6 +91,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         }
     }
 
+    #if DEBUG
+    // Development builds only; release builds play the intro on first launch.
     func applicationDockMenu(_ sender: NSApplication) -> NSMenu? {
         let menu = NSMenu()
         let item = NSMenuItem(title: "Demo Onboarding", action: #selector(showDemoOnboarding), keyEquivalent: "")
@@ -89,6 +100,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         menu.addItem(item)
         return menu
     }
+    #endif
 
     func registerMainWindow(_ window: NSWindow, openWindow: OpenWindowAction) {
         mainWindow = window

@@ -21,6 +21,10 @@
 }
 
 - (NSMenu *)dockMenu {
+#if !DEBUG
+    // Demo Onboarding is for development builds only.
+    return nil;
+#endif
     NSURL *applicationURL = self.applicationURL;
     if (!applicationURL) return nil;
     NSString *identifier = [NSBundle bundleWithURL:applicationURL].bundleIdentifier;

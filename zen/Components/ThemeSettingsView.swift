@@ -2,10 +2,14 @@ import SwiftUI
 import AppKit
 
 struct ZenTheme {
+    /// Onboarding's burgundy (`OnboardingPalette.background`), so the app
+    /// opens in the same color its introduction ends on.
+    static let defaultHex = "330000"
+
     let hex: String
 
     private var rgb: (Double, Double, Double) {
-        let value = UInt32(hex, radix: 16) ?? 0xF5F3EF
+        let value = UInt32(hex, radix: 16) ?? UInt32(Self.defaultHex, radix: 16)!
         return (Double((value >> 16) & 255) / 255, Double((value >> 8) & 255) / 255, Double(value & 255) / 255)
     }
     var background: Color { Color(red: rgb.0, green: rgb.1, blue: rgb.2) }
@@ -56,7 +60,7 @@ struct ZenTheme {
 }
 
 private struct ZenThemeKey: EnvironmentKey {
-    static let defaultValue = ZenTheme(hex: "F5F3EF")
+    static let defaultValue = ZenTheme(hex: ZenTheme.defaultHex)
 }
 extension EnvironmentValues {
     var zenTheme: ZenTheme {

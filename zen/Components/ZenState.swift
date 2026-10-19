@@ -29,7 +29,7 @@ final class ZenState: ObservableObject {
         didSet { defaults.set(isDarkMode, forKey: "isDarkMode") }
     }
 
-    @Published var themeHex: String = "F5F3EF" {
+    @Published var themeHex: String = ZenTheme.defaultHex {
         didSet { defaults.set(themeHex, forKey: "themeHex") }
     }
     /// Change through `HotkeyManager.setShortcut(_:)` so a shortcut that can't
@@ -49,7 +49,7 @@ final class ZenState: ObservableObject {
         hasCompletedOnboarding = defaults.bool(forKey: "hasCompletedOnboarding")
         autoPasteEnabled = defaults.object(forKey: "autoPasteEnabled") as? Bool ?? true
         isDarkMode = defaults.bool(forKey: "isDarkMode")
-        themeHex = defaults.string(forKey: "themeHex") ?? (isDarkMode ? "191919" : "F5F3EF")
+        themeHex = defaults.string(forKey: "themeHex") ?? (isDarkMode ? "191919" : ZenTheme.defaultHex)
         transcriptionModel = defaults.string(forKey: "transcriptionModel")
             .flatMap(TranscriptionModel.init(rawValue:)) ?? .voz
         recordingShortcut = defaults.data(forKey: "recordingShortcut")

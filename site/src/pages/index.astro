@@ -1,0 +1,127 @@
+---
+// The home page: no product UI, written in the same loose hand as the "zen"
+// wordmark, which doubles as the page's title.
+import Base from "../layouts/Base.astro";
+---
+<Base
+  title="Zen: type at the speed of your thoughts"
+  description="Type at the speed of your thoughts. Zen turns your voice into text right on your Mac; the model and every transcription stay there."
+>
+  <div class="home">
+    <div class="column">
+      <h1><span class="wordmark logo" role="img" aria-label="Zen"></span></h1>
+
+      <p>type at the speed of your thoughts.</p>
+      <p>
+        <mark>everything stays on your mac.</mark> the model (<a href="https://huggingface.co/desert-ant-labs/voz">voz</a> or <a href="https://huggingface.co/FermionResearch/Phonon-2-CoreML">phonon-2</a>) runs right here, and so does every transcription. nothing ever leaves it.
+      </p>
+
+      <a class="cta" href="/download">
+        <span>download for mac</span>
+        <svg class="arrow" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <path d="M8 9c9 4 16 11 22 21" />
+          <path d="M19 29.5c4 .6 8 .8 11.5.5c.4-4-.2-8-1.6-11.5" />
+        </svg>
+        <!-- A loose pen loop around the link, drawn in on load. -->
+        <svg class="loop" viewBox="0 0 260 96" preserveAspectRatio="none" fill="none" aria-hidden="true">
+          <path d="M34 30C70 10 170 6 222 20c30 8 36 34 14 50c-30 22-130 26-186 14C14 76 6 54 24 38c18-16 70-24 112-24" />
+        </svg>
+      </a>
+    </div>
+  </div>
+</Base>
+
+<script>
+  // Draw the pen loop in from start to end, once. Without JavaScript, or with
+  // Reduce Motion on, it simply shows.
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    for (const path of document.querySelectorAll<SVGPathElement>(".loop path")) {
+      const length = path.getTotalLength();
+      path.style.strokeDasharray = `${length}`;
+      path.animate([{ strokeDashoffset: length }, { strokeDashoffset: 0 }], {
+        duration: 900,
+        delay: 350,
+        easing: "cubic-bezier(0.6, 0.05, 0.3, 1)",
+        fill: "both",
+      });
+    }
+  }
+</script>
+
+<style>
+  .home {
+    height: 100%;
+    display: grid;
+    padding-block: clamp(16px, 4vh, 40px);
+  }
+  .column {
+    align-self: center;
+    justify-self: center;
+    width: min(100%, 600px);
+  }
+  /* The wordmark is the page's title. */
+  h1 { margin: 0 0 clamp(16px, 3.6vh, 32px); line-height: 0; }
+  .logo {
+    display: block;
+    width: clamp(150px, calc(19 * var(--fit)), 260px);
+    color: var(--foreground);
+  }
+  p {
+    margin: 0;
+    max-width: 30ch;
+    font-size: clamp(22px, calc(2.7 * var(--fit)), 30px);
+    line-height: 1.15;
+    color: var(--muted);
+  }
+  /* A quick highlighter swipe, slightly off. */
+  mark {
+    padding: 0 0.15em;
+    margin: 0 -0.05em;
+    color: var(--strong);
+    background: linear-gradient(176deg, transparent 18%, rgba(245, 197, 197, 0.9) 22%, rgba(245, 197, 197, 0.9) 82%, transparent 86%);
+    border-radius: 0.3em 0.1em 0.35em 0.15em;
+  }
+  p + p { margin-top: clamp(10px, 2vh, 18px); }
+  p a {
+    color: var(--strong);
+    text-decoration: underline wavy #91585b;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 5px;
+  }
+  p a:hover { color: #91585b; }
+
+  /* The link, ringed by a pen loop that sketches itself in. */
+  .cta {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: clamp(30px, 6vh, 56px) 0 0 18px;
+    padding: 14px 26px;
+    font-size: clamp(28px, calc(3.6 * var(--fit)), 38px);
+    font-weight: 600;
+    color: var(--strong);
+    text-decoration: none;
+    transform: rotate(-2deg);
+  }
+  .cta:hover { color: #91585b; }
+  .arrow { width: 0.95em; height: 0.95em; transform: translateY(0.1em); }
+  .arrow path, .loop path {
+    stroke: #91585b;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .loop {
+    position: absolute;
+    inset: -10px -22px -8px -18px;
+    width: calc(100% + 40px);
+    height: calc(100% + 18px);
+    overflow: visible;
+  }
+  .loop path {
+    /* Stretched with the link, so the line thickens and thins a little, like a pen. */
+  }
+  .cta:hover .loop path { stroke: var(--strong); }
+
+</style>

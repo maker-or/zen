@@ -1,0 +1,158 @@
+---
+// The download page, in the same loose hand as the home page. The download
+// starts on its own; the wordmark leads back home.
+import Base from "../layouts/Base.astro";
+
+// GitHub serves the newest release's Zen.dmg here, so this page never changes per release.
+const dmg = "https://github.com/maker-or/zen/releases/latest/download/Zen.dmg";
+---
+<Base title="Download Zen" description="Download Zen for macOS and get it running in a minute.">
+  <div class="page">
+    <div class="column">
+      <h1><a href="/" aria-label="Zen home"><span class="wordmark"></span></a></h1>
+
+      <ol>
+        <!-- Zen isn't notarized, so macOS refuses a downloaded zen.dmg on a
+             double-click. Clearing its quarantine first lets it open, and the
+             app copied out of it carries no quarantine either. -->
+        <li>
+          <span class="n">1</span>
+          <div>
+            copy this command and paste it into <mark>terminal</mark>:
+            <div class="command">
+              <code id="command">cd ~/Downloads && xattr -c Zen.dmg && open Zen.dmg</code>
+              <button type="button" id="copy">copy</button>
+            </div>
+          </div>
+        </li>
+        <li>
+          <span class="n">2</span>
+          <div>in the window that opens, drag zen into applications.</div>
+        </li>
+        <li>
+          <span class="n">3</span>
+          <div>open zen.</div>
+        </li>
+      </ol>
+
+      <p class="again" id="again">didn’t start? <a id="dmg-link" href={dmg}>download again</a></p>
+    </div>
+  </div>
+</Base>
+
+<script>
+  const link = document.getElementById("dmg-link") as HTMLAnchorElement;
+  // Start the download once the page is up; the DMG is served as an attachment,
+  // so the browser stays here with the steps. /download?steps shows just the
+  // steps, for coming back to them without downloading again.
+  if (new URLSearchParams(window.location.search).has("steps")) {
+    document.getElementById("again")!.innerHTML = `need the app? <a href="${link.href}">download zen.dmg</a>`;
+  } else {
+    window.addEventListener("load", () => setTimeout(() => { window.location.href = link.href; }, 600));
+  }
+
+  const copy = document.getElementById("copy")!;
+  copy.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(document.getElementById("command")!.textContent ?? "");
+      copy.textContent = "copied!";
+    } catch {
+      // No clipboard access: select the command so ⌘C copies it.
+      const range = document.createRange();
+      range.selectNodeContents(document.getElementById("command")!);
+      window.getSelection()?.removeAllRanges();
+      window.getSelection()?.addRange(range);
+      copy.textContent = "press ⌘C";
+    }
+    setTimeout(() => { copy.textContent = "copy"; }, 1800);
+  });
+</script>
+
+<style>
+  .page {
+    height: 100%;
+    display: grid;
+    padding-block: clamp(16px, 4vh, 40px);
+  }
+  .column {
+    align-self: center;
+    justify-self: center;
+    width: min(100%, 600px);
+    font-size: clamp(22px, calc(2.7 * var(--fit)), 30px);
+    line-height: 1.15;
+  }
+
+  /* The wordmark is the page's title and the way home. */
+  h1 { margin: 0 0 clamp(18px, 4vh, 36px); line-height: 0; }
+  h1 a { display: inline-block; color: var(--foreground); }
+  h1 a:hover { color: #91585b; }
+  h1 .wordmark { width: clamp(150px, calc(19 * var(--fit)), 260px); }
+
+  ol { margin: 0; padding: 0; list-style: none; display: grid; gap: clamp(12px, 2.6vh, 22px); }
+  /* minmax(0, …) lets the one-line command scroll in place instead of
+     widening the page past a phone's screen. */
+  li {
+    display: grid;
+    grid-template-columns: 1.3em minmax(0, 1fr);
+    gap: 10px;
+    align-items: baseline;
+    color: var(--muted);
+  }
+  /* Written numbers, each at its own slight angle. */
+  .n { font-size: 1.45em; font-weight: 600; line-height: 1; color: #91585b; transform: rotate(-6deg); }
+  li:nth-child(2) .n { transform: rotate(4deg); }
+  li:nth-child(3) .n { transform: rotate(-3deg); }
+
+  /* A quick highlighter swipe, slightly off. */
+  mark {
+    padding: 0 0.15em;
+    margin: 0 -0.05em;
+    color: var(--strong);
+    background: linear-gradient(176deg, transparent 18%, rgba(245, 197, 197, 0.9) 22%, rgba(245, 197, 197, 0.9) 82%, transparent 86%);
+    border-radius: 0.3em 0.1em 0.35em 0.15em;
+  }
+
+  /* The exact command in type, in a box drawn by hand. */
+  .command {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 10px;
+    padding: 10px 16px;
+    border: 2px solid #91585b;
+    border-radius: 255px 18px 225px 18px / 18px 225px 18px 255px;
+    transform: rotate(-0.6deg);
+  }
+  code {
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    white-space: nowrap;
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--strong);
+  }
+  button {
+    flex: none;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--strong);
+    font: 600 1em var(--font);
+    text-decoration: underline wavy #91585b;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 5px;
+    cursor: pointer;
+  }
+  button:hover { color: #91585b; }
+
+  .again { margin: clamp(18px, 4vh, 34px) 0 0 calc(1.3em + 10px); color: var(--muted); }
+  .again :global(a) {
+    color: var(--strong);
+    font-weight: 600;
+    text-decoration: underline wavy #91585b;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 5px;
+  }
+  .again :global(a:hover) { color: #91585b; }
+</style>

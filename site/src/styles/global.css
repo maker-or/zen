@@ -1,0 +1,108 @@
+/* Zen site: warm paper with the app's burgundy ink. Every page fits one screen exactly. */
+:root {
+  --background: #faf7f6;
+  --foreground: #3a0711;
+  --strong: #24030a;
+  --muted: rgba(58, 7, 17, 0.66);
+  --hairline: rgba(58, 7, 17, 0.16);
+  --accent: #8e3a46;
+  --on-accent: #fff;
+  /* Written in the same loose hand as the "zen" wordmark. */
+  --font: "Caveat", "Bradley Hand", cursive;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  /* Side gutter, and a unit that shrinks with whichever screen side is short. */
+  --gutter: clamp(16px, 4vw, 40px);
+  --fit: min(1vw, 1.6vh);
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; height: 100%; }
+
+body {
+  /* One screen, never more: the content row takes what's left and pages
+     scale into it rather than growing past it. */
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+  display: grid;
+  /* minmax(0, …): wide content (the cropped window) can't widen the page. */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font);
+  font-size: clamp(15px, calc(0.9rem + 0.25 * var(--fit)), 18px);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* A page without header and footer gives the content the whole screen. */
+body.bare { grid-template-rows: minmax(0, 1fr); }
+body.bare main { max-width: none; }
+
+a { color: var(--accent); text-underline-offset: 3px; }
+a:hover { color: var(--strong); }
+strong { color: var(--strong); font-weight: 600; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+/* The handwritten wordmark, coloured by `color` through a mask. */
+.wordmark {
+  display: inline-block;
+  aspect-ratio: 210 / 128;
+  background: currentColor;
+  -webkit-mask: url("/zen-wordmark.svg") no-repeat center / contain;
+  mask: url("/zen-wordmark.svg") no-repeat center / contain;
+}
+
+.site-header,
+.site-footer {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-inline: var(--gutter);
+}
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: clamp(12px, 2.4vh, 24px);
+}
+.site-header .home { color: var(--foreground); display: inline-flex; }
+.site-header .home .wordmark { width: clamp(52px, 5vw, 72px); }
+.site-header nav a { color: var(--foreground); text-decoration: none; font-weight: 600; }
+.site-header nav a:hover { color: var(--accent); }
+.site-footer {
+  padding-block: clamp(10px, 2vh, 24px);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+main {
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-inline: var(--gutter);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: clamp(10px, 1.6vh, 14px) clamp(20px, 2.4vw, 26px);
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.button:hover { color: var(--on-accent); background: var(--strong); transform: translateY(-1px); }
+.button svg { width: 18px; height: 18px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .button { transition: none; }
+}

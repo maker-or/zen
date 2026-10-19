@@ -166,6 +166,18 @@ Raise `MARKETING_VERSION` or `CURRENT_PROJECT_VERSION` in the project before eac
 
 `scripts/release.sh --skip-notarize` signs and packages without notarizing. `--adhoc` is a local dry run with no certificate. Neither DMG will open on other Macs without a Gatekeeper warning.
 
+## Website
+
+The marketing site lives in `site/`, a small Astro project with a landing page and a download page. Both pages always fit one screen and never scroll. It builds to static HTML and doesn't affect the Xcode project.
+
+```bash
+cd site && npm install && npm run dev
+```
+
+The social preview image is `site/public/og.png`, at 1200 × 630.
+
+Deploy it on Vercel with **Root Directory** set to `site`; Vercel detects Astro. The download page links to `https://github.com/maker-or/zen/releases/latest/download/Zen.dmg`, so attach the DMG to each GitHub release under the exact name `Zen.dmg`. `/download?steps` shows the install steps without starting another download.
+
 ## Notes
 
 - Zen logs shortcut, recording, and model events to the unified log. To see them:

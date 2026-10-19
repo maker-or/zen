@@ -1,0 +1,67 @@
+---
+// Every page is exactly one screen: header, content, footer, never scrolling.
+// Pages put their content in the default slot and may replace the footer.
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description: string;
+  /** Header link; leave out for a page without header and footer. */
+  nav?: { href: string; label: string };
+  /** Social preview image; defaults to the site-wide one. */
+  image?: string;
+}
+
+const { title, description, nav, image = "/og.png" } = Astro.props;
+const imageURL = new URL(image, Astro.site);
+// Pages build as index.html and download.html; share the clean URLs Vercel serves.
+const pageURL = new URL(Astro.url.pathname.replace(/(index)?\.html$/, ""), Astro.site);
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#faf7f6" />
+    <link rel="canonical" href={pageURL} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Zen" />
+    <meta property="og:url" content={pageURL} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={imageURL} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="The zen wordmark above the Zen window, a grid of transcribed voice memos." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={imageURL} />
+    <link rel="icon" href="/zen-wordmark.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600&display=swap"
+    />
+    <slot name="head" />
+  </head>
+  <body class:list={{ bare: !nav }}>
+    {nav && (
+      <header class="site-header">
+        <a class="home" href="/" aria-label="Zen home"><span class="wordmark"></span></a>
+        <nav><a href={nav.href}>{nav.label}</a></nav>
+      </header>
+    )}
+    <main>
+      <slot />
+    </main>
+    {nav && (
+      <footer class="site-footer">
+        <slot name="footer" />
+      </footer>
+    )}
+  </body>
+</html>

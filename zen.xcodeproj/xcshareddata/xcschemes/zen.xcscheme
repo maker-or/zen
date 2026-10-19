@@ -16,7 +16,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "B33F6D5F2FF3D67F0084E9A2"
-               BuildableName = "zen.app"
+               BuildableName = "Zen.app"
                BlueprintName = "zen"
                ReferencedContainer = "container:zen.xcodeproj">
             </BuildableReference>
@@ -46,7 +46,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "B33F6D5F2FF3D67F0084E9A2"
-            BuildableName = "zen.app"
+            BuildableName = "Zen.app"
             BlueprintName = "zen"
             ReferencedContainer = "container:zen.xcodeproj">
          </BuildableReference>
@@ -63,7 +63,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "B33F6D5F2FF3D67F0084E9A2"
-            BuildableName = "zen.app"
+            BuildableName = "Zen.app"
             BlueprintName = "zen"
             ReferencedContainer = "container:zen.xcodeproj">
          </BuildableReference>

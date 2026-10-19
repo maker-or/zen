@@ -6,7 +6,7 @@ You can also drop any video or audio file into the **Transcribe** tab to extract
 
 ## Requirements
 
-- macOS 26.5 or later
+- macOS 26.5 or later on a Mac with Apple silicon
 - Xcode 17 or later
 - Microphone access
 - No API keys required (runs 100% on-device using Voz or Phonon-2 via Core ML)
@@ -118,7 +118,7 @@ xcodebuild -project zen.xcodeproj \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-The project has the `zen` application target and an embedded `ZenDockTilePlugin` bundle target, with no automated test target. Build the application scheme to include both. The Dock plug-in uses Apple's `NSDockTilePlugIn` API and is intended for direct distribution outside the Mac App Store. Sign the nested plug-in before signing the application when packaging a release.
+The project has the `zen` application target, which builds `Zen.app`, and an embedded `ZenDockTilePlugin` bundle target, with no automated test target. Build the application scheme to include both. The Dock plug-in uses Apple's `NSDockTilePlugIn` API and is intended for direct distribution outside the Mac App Store. Both targets use the hardened runtime; microphone access is granted by `Configuration/Zen.entitlements`. Builds are Apple silicon only, because Phonon-2's Core ML runtime uses `Float16`, which Intel Macs don't support.
 
 Model preference, cancellation, and timestamp grouping checks are available after building Release with `-derivedDataPath build`:
 
@@ -139,6 +139,29 @@ python3 scripts/check-auto-paste.py
 ```
 
 Pass the path to the official `ci/clips/1089-134686-0002.flac` clip from the Phonon-2 model repository to also verify both engines against known speech. This downloads missing model weights and prepares Core ML on first run.
+
+## Releasing
+
+`scripts/release.sh` builds a Release copy of `Zen.app`. It signs it with your Developer ID (the Dock plug-in first, then the app), notarizes and staples the app, then packages, signs, notarizes, and staples `dist/Zen-<version>-<build>.dmg`.
+
+One-time setup:
+
+1. Join the Apple Developer Program. Then create a **Developer ID Application** certificate at [developer.apple.com](https://developer.apple.com/account/resources/certificates) and install it in your login keychain.
+2. Create an app-specific password at [account.apple.com](https://account.apple.com). Then store notarization credentials in your keychain:
+
+```bash
+xcrun notarytool store-credentials zen-notary --apple-id you@example.com --team-id YOURTEAMID
+```
+
+Then, for each release:
+
+```bash
+scripts/release.sh
+```
+
+Raise `MARKETING_VERSION` or `CURRENT_PROJECT_VERSION` in the project before each release. Testers then get a new file name, and the build number increases. The script picks the only Developer ID Application identity in your keychain. If you have several, set `ZEN_SIGNING_IDENTITY`. Set `ZEN_NOTARY_PROFILE` to use a profile other than `zen-notary`. Notarization usually takes a few minutes per submission, and there are two submissions: the app, then the DMG.
+
+`scripts/release.sh --skip-notarize` signs and packages without notarizing. `--adhoc` is a local dry run with no certificate. Neither DMG will open on other Macs without a Gatekeeper warning.
 
 ## Notes
 

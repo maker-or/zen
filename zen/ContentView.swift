@@ -42,7 +42,9 @@ struct ContentView: View {
             }
         }
         .toolbar {
-            ToolbarItemGroup(placement: .confirmationAction) {
+            // Push the appearance and settings controls to the trailing edge.
+            ToolbarSpacer(.flexible)
+            ToolbarItemGroup {
                 Button(action: {
                     showingSettings.toggle()
                 }) {

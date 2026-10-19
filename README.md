@@ -16,7 +16,7 @@ Zen is a macOS voice-memo app. Press **Option+Space** (or your own shortcut) fro
 3. Speak, then press **Option+Space** again to stop.
 4. Wait for the on-device transcription to finish. The result is copied to the clipboard automatically and, with Accessibility enabled, pasted into the input where you started recording.
 
-Enable **Settings → Automatic paste → Paste after recording** and click **Set up automatic paste…** to set up access. A glass guide appears at the bottom of System Settings. Drag the Zen app row into **Privacy & Security → Accessibility**, then turn on its switch. Dragging adds the app; permission is granted only when you enable it. The guide follows the Settings window and closes once access is enabled. Input Monitoring is not needed for the recording shortcut. Settings also includes a test input: click it, press your recording shortcut to record, then press the shortcut again to stop. The status beneath it explains when a result falls back to the clipboard.
+Enable **Settings → General → Paste after recording** and click **Set up…** to set up access. A glass guide appears at the bottom of System Settings. Drag the Zen app row into **Privacy & Security → Accessibility**, then turn on its switch. Dragging adds the app; permission is granted only when you enable it. The guide follows the Settings window and closes once access is enabled. Input Monitoring is not needed for the recording shortcut. The General tab also includes a test input: click it, press your recording shortcut to record, then press the shortcut again to stop. The status beneath it explains when a result falls back to the clipboard.
 
 Automatic paste is limited to shortcut recordings and the original editable input. If there was no input, focus changed, the app does not expose an editable input through Accessibility, or permission is unavailable, the result stays on the clipboard. Zen never activates another app, pastes into password fields, or submits the text.
 
@@ -28,7 +28,7 @@ The main window shows your memos. You can:
 
 ## Recording shortcut
 
-The default shortcut is **Option+Space**. To change it, open **Settings → Recording shortcut**, click the shortcut and press a new key combination. You can also choose **Use a different shortcut** on the onboarding shortcut screen. Press **Escape** to cancel, or use the reset button to return to Option+Space. Your choice is saved between launches and appears throughout the app.
+The default shortcut is **Option+Space**. To change it, open **Settings → General**, click the shortcut and press a new key combination. You can also choose **Use a different shortcut** on the onboarding shortcut screen. Press **Escape** to cancel, or use the reset button to return to Option+Space. Your choice is saved between launches and appears throughout the app.
 
 A shortcut needs Control, Option or Command, unless it's a function key (F1–F20). Combinations used by macOS or standard editing, such as ⌘C, ⌘Space and the screenshot shortcuts, are rejected. ⌘V is also rejected because automatic paste uses it. If the shortcut can't be registered, for example because another app already uses it, Zen keeps your previous shortcut and explains why in Settings.
 
@@ -36,7 +36,7 @@ A shortcut needs Control, Option or Command, unless it's a function key (F1–F2
 
 The introduction has six screens: welcome, the recording shortcut and saved transcripts, on-device transcription, model selection and download, optional automatic-paste setup, and microphone setup. Every screen is shown in sequence, including when replaying with microphone access already granted. Use the arrows to move forward and back. Accessibility is requested only after clicking **Enable automatic paste**; microphone access is requested only after clicking **Enable microphone**. You can skip either permission and grant it later; without automatic paste, results stay on the clipboard. Choose Voz or Phonon-2 on the model screen, then click **Download & Prepare**. Download progress, preparation, and retry states appear there. You can download later or continue while preparation runs in the background. The same saved model selection and preparation status remain available in Settings.
 
-Completion is saved between launches. Use **Window → Onboarding** or **Settings → Replay introduction** to revisit it in a separate window. Each replay starts at the welcome screen. Text reveals word by word when each screen appears. Reduce Motion uses a short fade without movement or stagger. Completed installations warm cached models at startup; missing models download only when you prepare them or start transcription.
+Completion is saved between launches. Use **Window → Onboarding** or **Settings → About → Replay** to revisit it in a separate window. Each replay starts at the welcome screen. Text reveals word by word when each screen appears. Reduce Motion uses a short fade without movement or stagger. Completed installations warm cached models at startup; missing models download only when you prepare them or start transcription.
 
 For a first-launch demonstration, right-click Zen’s Dock icon and choose **Demo Onboarding**. A blurred bloom expands over the desktop into a pink-and-burgundy window, reveals the bird, and dissolves into the first walkthrough screen. The original bundled score shares cue points with the visual timeline. Use the speaker control to mute, or **Escape / Skip intro** to go straight to onboarding. Reduce Motion uses a short window fade without the bloom or score. Replaying restarts the sequence and cancels the previous audio and animation. The main app remains hidden until the walkthrough is finished, without resetting the saved onboarding status.
 
@@ -48,7 +48,7 @@ Finishing onboarding expands the main window to at least 92% of its screen’s u
 
 ## Transcription models
 
-Open **Zen → Settings…** (**Command+,**) or the toolbar gear to choose a model. The selection is saved and used for every recording. An in-progress transcription keeps the model it started with.
+Open **Zen → Settings…** (**Command+,**) or the toolbar gear, then the **Model** tab, to choose a model. The selection is saved and used for every recording. An in-progress transcription keeps the model it started with.
 
 | Model | Languages | Size | Speed | WER |
 |---|---|---|---|---|

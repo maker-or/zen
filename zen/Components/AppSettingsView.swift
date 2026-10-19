@@ -1,147 +1,330 @@
 import SwiftUI
 import AppKit
 
+/// Native Settings tabs; each page follows the memo theme so it reads as part
+/// of Zen, and is short enough that nothing needs scrolling.
 struct AppSettingsView: View {
-    @Environment(\.openWindow) private var openWindow
+    enum Page: String, CaseIterable, Identifiable {
+        case general, model, about
+        var id: Self { self }
+    }
+
     @ObservedObject private var state = ZenState.shared
-    @ObservedObject private var service = TranscriptionService.shared
+    @State private var page: Page
+    private var theme: ZenTheme { ZenTheme(hex: state.themeHex) }
+
+    // A one-time seed for previews and visual verification.
+    init(initialPage: Page = .general) {
+        _page = State(initialValue: initialPage)
+    }
+
+    var body: some View {
+        TabView(selection: $page) {
+            Tab("General", systemImage: "gearshape", value: Page.general) {
+                SettingsPage { GeneralSettings() }
+            }
+            Tab("Model", systemImage: "waveform", value: Page.model) {
+                SettingsPage { ModelSettings() }
+            }
+            Tab("About", systemImage: "info.circle", value: Page.about) {
+                SettingsPage { AboutSettings() }
+            }
+        }
+        .tint(theme.foreground)
+        .environment(\.zenTheme, theme)
+        .containerBackground(theme.background, for: .window)
+        .preferredColorScheme(theme.isDark ? .dark : .light)
+    }
+}
+
+/// Fixed width and content height, so the Settings window resizes per tab.
+private struct SettingsPage<Content: View>: View {
+    @Environment(\.zenTheme) private var theme
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        content
+            .padding(24)
+            .frame(width: 520)
+            .fixedSize(horizontal: false, vertical: true)
+            .fontDesign(.rounded)
+            .foregroundStyle(theme.foreground)
+            .tint(theme.foreground)
+    }
+}
+
+// MARK: - General
+
+private struct GeneralSettings: View {
+    @Environment(\.zenTheme) private var theme
+    @ObservedObject private var state = ZenState.shared
     @ObservedObject private var autoPaste = AutoPasteService.shared
     @ObservedObject private var hotkey = HotkeyManager.shared
     @State private var testText = ""
 
-    private var model: TranscriptionModel { state.transcriptionModel }
-    private var modelState: TranscriptionService.ModelState? { service.modelStates[model] }
-    private var isPreparing: Bool {
-        switch modelState {
-        case .loading, .downloading: return true
-        default: return false
-        }
-    }
-
     var body: some View {
-        Form {
-            Section {
-                LabeledContent("Start and stop recording") {
+        VStack(alignment: .leading, spacing: 20) {
+            SettingsSection {
+                SettingsRow("Recording shortcut") {
                     ShortcutRecorder()
                 }
                 if let error = hotkey.registrationError {
-                    Label(error, systemImage: "exclamationmark.triangle")
-                        .foregroundStyle(.secondary)
+                    SettingsDivider()
+                    SettingsNote(error, systemImage: "exclamationmark.triangle")
                 }
-            } header: {
-                Text("Recording shortcut")
-            } footer: {
-                Text("Works from any app. Click the shortcut, then press a new key combination.")
             }
 
-            Section {
-                Toggle("Paste after recording", isOn: $state.autoPasteEnabled)
+            SettingsSection {
+                SettingsRow("Paste after recording") {
+                    Toggle("Paste after recording", isOn: $state.autoPasteEnabled)
+                        .toggleStyle(.switch)
+                        .labelsHidden()
+                }
+                SettingsDivider()
                 if autoPaste.isTrusted {
-                    Label("Accessibility enabled", systemImage: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
+                    SettingsRow("Accessibility enabled", systemImage: "checkmark.circle.fill") {
+                        Button("Manage…") { AccessibilityPermissionGuide.shared.show() }
+                            .buttonStyle(.zenCapsule)
+                    }
                 } else {
-                    Label("Accessibility access needed for this copy of Zen", systemImage: "hand.raised")
-                        .foregroundStyle(.secondary)
-                }
-                Button(autoPaste.isTrusted ? "Manage Accessibility access…" : "Set up automatic paste…") {
-                    state.autoPasteEnabled = true
-                    AccessibilityPermissionGuide.shared.show()
-                }
-                TextField("Click here, then press \(state.recordingShortcut.displayString) to test", text: $testText)
-                    .textFieldStyle(.roundedBorder)
-                    .accessibilityLabel("Test automatic paste")
-                if let message = autoPaste.deliveryMessage {
-                    Text(message).font(.caption).foregroundStyle(.secondary)
-                }
-            } header: {
-                Text("Automatic paste")
-            } footer: {
-                Text("Paste into the text field where you started recording. If focus changes or there’s no editable field, your transcript stays on the clipboard.")
-            }
-
-            Section {
-                Picker("Transcription model", selection: $state.transcriptionModel) {
-                    ForEach(TranscriptionModel.allCases) { model in
-                        Text(model.name).tag(model)
-                            .disabled(!model.isSupported)
+                    SettingsRow("Accessibility access needed", systemImage: "hand.raised") {
+                        Button("Set up…") {
+                            state.autoPasteEnabled = true
+                            AccessibilityPermissionGuide.shared.show()
+                        }
+                        .buttonStyle(.zenCapsule(prominent: true))
                     }
                 }
-                .pickerStyle(.radioGroup)
-
-                Text(model.description)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            } header: {
-                Text("Speech recognition")
-            } footer: {
-                Text("Used for voice memos and audio or video files. Changes apply to the next transcription.")
-            }
-
-            Section {
-                preparationStatus
-
-                if !service.isModelLoaded(model) {
-                    Button(isPreparing ? "Preparing…" : "Download & Prepare") {
-                        let selectedModel = model
-                        Task { try? await service.prepareModel(selectedModel) }
+                SettingsDivider()
+                VStack(alignment: .leading, spacing: 8) {
+                    TextField("Try it: click here, then press \(state.recordingShortcut.displayString)", text: $testText)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 13, design: .rounded))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 9)
+                        .background(theme.foreground.opacity(0.07), in: .rect(cornerRadius: 10))
+                        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(theme.foreground.opacity(0.14)))
+                        .accessibilityLabel("Test automatic paste")
+                    if let message = autoPaste.deliveryMessage {
+                        Text(message)
+                            .font(.system(size: 12, design: .rounded))
+                            .foregroundStyle(theme.foreground.opacity(0.7))
+                            .fixedSize(horizontal: false, vertical: true)
                     }
-                    .disabled(isPreparing || !model.isSupported)
                 }
-            } header: {
-                Text("Model availability")
-            } footer: {
-                Text("The model is downloaded once and runs on this Mac. Audio stays on your device.")
-            }
-
-            if model == .phonon2 {
-                Section {
-                    Link("Phonon-2 by Fermion Research", destination: URL(string: "https://huggingface.co/FermionResearch/Phonon-2-CoreML")!)
-                    Text("Based on NVIDIA Parakeet TDT. Model weights licensed under CC BY 4.0.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            Section {
-                Button("Replay introduction") { openWindow(id: "onboarding") }
+                .padding(14)
             }
         }
-        .formStyle(.grouped)
-        .frame(width: 500, height: 640)
         .onAppear { autoPaste.refreshPermission() }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             autoPaste.refreshPermission()
         }
     }
+}
 
-    @ViewBuilder
-    private var preparationStatus: some View {
-        if !model.isSupported {
-            Label("Phonon-2 requires a Mac with Apple silicon.", systemImage: "info.circle")
-        } else {
-            switch modelState {
-            case .ready:
-                Label("Ready to transcribe", systemImage: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
-            case .loading:
-                HStack(spacing: 10) {
-                    ProgressView().controlSize(.small)
-                    Text("Preparing \(model.name)…")
+// MARK: - Model
+
+private struct ModelSettings: View {
+    @Environment(\.zenTheme) private var theme
+    @ObservedObject private var state = ZenState.shared
+    @ObservedObject private var service = TranscriptionService.shared
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(TranscriptionModel.allCases) { model in
+                ModelCard(model: model, isSelected: model == state.transcriptionModel, palette: .theme(theme)) {
+                    state.transcriptionModel = model
+                    // Load it now if it's installed, so the next recording doesn't wait.
+                    service.preloadIfInstalled(model)
                 }
-                Text("First-time preparation can take a few minutes.")
-                    .font(.caption).foregroundStyle(.secondary)
-            case .downloading(let fraction):
-                ProgressView(value: fraction) {
-                    Text("Downloading \(model.name)…")
-                } currentValueLabel: {
-                    Text(fraction, format: .percent.precision(.fractionLength(0)))
-                }
-            case .failed(let message):
-                Label("Couldn’t prepare \(model.name)", systemImage: "exclamationmark.triangle")
-                Text(message).font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
-            case nil:
-                Text("\(model.name) will prepare automatically on first use.")
             }
         }
     }
+}
+
+// MARK: - About
+
+private struct AboutSettings: View {
+    @Environment(\.openWindow) private var openWindow
+    @Environment(\.zenTheme) private var theme
+
+    private var version: String {
+        let info = Bundle.main.infoDictionary
+        let short = info?["CFBundleShortVersionString"] as? String ?? "–"
+        let build = info?["CFBundleVersion"] as? String ?? "–"
+        return "Version \(short) (\(build))"
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            HStack(spacing: 14) {
+                Image(nsImage: NSApp.applicationIconImage)
+                    .resizable()
+                    .frame(width: 56, height: 56)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Zen").font(.system(size: 22, weight: .semibold, design: .rounded))
+                    Text(version)
+                        .font(.system(size: 12, design: .rounded))
+                        .foregroundStyle(theme.foreground.opacity(0.7))
+                        .textSelection(.enabled)
+                }
+            }
+            .padding(.horizontal, 4)
+
+            SettingsSection {
+                SettingsRow("Introduction") {
+                    Button("Replay") { openWindow(id: "onboarding") }
+                        .buttonStyle(.zenCapsule)
+                }
+                SettingsDivider()
+                SettingsRow("Your memos") {
+                    Button("Show in Finder") {
+                        let storage = ZenState.shared.storage
+                        storage.createDirectories()
+                        NSWorkspace.shared.activateFileViewerSelecting([storage.historyURL])
+                    }
+                    .buttonStyle(.zenCapsule)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Building blocks
+
+private struct SettingsSection<Content: View>: View {
+    @Environment(\.zenTheme) private var theme
+    let title: String?
+    var footer: String?
+    @ViewBuilder var content: Content
+
+    init(_ title: String? = nil, footer: String? = nil, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.footer = footer
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let title {
+                Text(title)
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .foregroundStyle(theme.foreground.opacity(0.65))
+                    .padding(.horizontal, 4)
+            }
+            VStack(alignment: .leading, spacing: 0) { content }
+                .background(theme.foreground.opacity(0.05), in: .rect(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(theme.foreground.opacity(0.13)))
+            if let footer {
+                Text(footer)
+                    .font(.system(size: 11, design: .rounded))
+                    .foregroundStyle(theme.foreground.opacity(0.6))
+                    .padding(.horizontal, 4)
+            }
+        }
+    }
+}
+
+private struct SettingsRow<Trailing: View>: View {
+    @Environment(\.zenTheme) private var theme
+    let title: String
+    var detail: String?
+    var systemImage: String?
+    @ViewBuilder var trailing: Trailing
+
+    init(_ title: String, detail: String? = nil, systemImage: String? = nil, @ViewBuilder trailing: () -> Trailing) {
+        self.title = title
+        self.detail = detail
+        self.systemImage = systemImage
+        self.trailing = trailing()
+    }
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            if let systemImage {
+                Image(systemName: systemImage)
+                    .font(.system(size: 15, weight: .medium))
+                    .frame(width: 20)
+                    .accessibilityHidden(true)
+            }
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).font(.system(size: 14, weight: .medium, design: .rounded))
+                if let detail {
+                    Text(detail)
+                        .font(.system(size: 12, design: .rounded))
+                        .foregroundStyle(theme.foreground.opacity(0.68))
+                        .fixedSize(horizontal: false, vertical: true)
+                        .textSelection(.enabled)
+                }
+            }
+            Spacer(minLength: 12)
+            trailing.fixedSize()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+    }
+}
+
+private struct SettingsNote: View {
+    let text: String
+    let systemImage: String
+
+    init(_ text: String, systemImage: String) {
+        self.text = text
+        self.systemImage = systemImage
+    }
+
+    var body: some View {
+        Label(text, systemImage: systemImage)
+            .font(.system(size: 12, design: .rounded))
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(14)
+    }
+}
+
+private struct SettingsDivider: View {
+    @Environment(\.zenTheme) private var theme
+
+    var body: some View {
+        Rectangle()
+            .fill(theme.foreground.opacity(0.1))
+            .frame(height: 1)
+            .padding(.leading, 14)
+    }
+}
+
+/// A capsule button in theme colors; `prominent` fills it for the main action.
+struct ZenCapsuleButtonStyle: ButtonStyle {
+    var prominent = false
+
+    func makeBody(configuration: Configuration) -> some View {
+        CapsuleLabel(configuration: configuration, prominent: prominent)
+    }
+
+    private struct CapsuleLabel: View {
+        @Environment(\.zenTheme) private var theme
+        @Environment(\.isEnabled) private var isEnabled
+        let configuration: Configuration
+        let prominent: Bool
+
+        var body: some View {
+            configuration.label
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .foregroundStyle(prominent ? theme.background : theme.foreground)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 6)
+                .background {
+                    Capsule().fill(prominent ? theme.foreground : theme.foreground.opacity(0.12))
+                        .overlay(Capsule().strokeBorder(theme.foreground.opacity(prominent ? 0 : 0.16)))
+                }
+                .opacity(configuration.isPressed ? 0.75 : isEnabled ? 1 : 0.45)
+                .contentShape(.capsule)
+        }
+    }
+}
+
+extension ButtonStyle where Self == ZenCapsuleButtonStyle {
+    static var zenCapsule: ZenCapsuleButtonStyle { ZenCapsuleButtonStyle() }
+    static func zenCapsule(prominent: Bool) -> ZenCapsuleButtonStyle { ZenCapsuleButtonStyle(prominent: prominent) }
 }

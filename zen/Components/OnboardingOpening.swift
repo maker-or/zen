@@ -32,11 +32,10 @@ struct OnboardingOpening: View {
             }
             HStack(spacing: 22) {
                 OnboardingWordLine(text: "of your thoughts", startingAt: 6)
-                Image("OnboardingBird")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 60, height: 44)
-                    .rotationEffect(.degrees(-15))
+                ZenHandwrittenLogo()
+                    .foregroundStyle(OnboardingPalette.accent)
+                    .frame(width: 82)
+                    .accessibilityHidden(true)
                     .onboardingReveal(index: 9)
             }
         }

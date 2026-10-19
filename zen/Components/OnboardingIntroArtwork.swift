@@ -5,10 +5,12 @@ enum OnboardingIntroTiming {
     static let bloomEnd = 0.38
     static let expansion = 0.65
     static let windowSettled = 1.9
-    static let logo = 1.85
-    static let logoVisible = 2.25
-    static let dissolve = 2.85
-    static let handoff = 3.8
+    /// The wordmark is written from `logo` to `logoVisible`, then held.
+    static let logo = 1.55
+    static let logoVisible = 3.0
+    static let dissolve = 3.3
+    static let logoFade = 0.45
+    static let handoff = 4.25
     static let handoffFade = 0.18
     static let reducedMotionHandoff = 0.6
     static let canvasPadding: CGFloat = 72
@@ -30,7 +32,9 @@ struct OnboardingIntroArtwork: View {
             let morph = reduceMotion ? 1 : eased(0.7, OnboardingIntroTiming.windowSettled)
             let bloom = reduceMotion ? eased(0, 0.2) : eased(0, OnboardingIntroTiming.bloomEnd)
             let wash = reduceMotion ? 0 : 1 - eased(OnboardingIntroTiming.dissolve, OnboardingIntroTiming.handoff)
-            let logo = reduceMotion ? 0 : eased(OnboardingIntroTiming.logo, OnboardingIntroTiming.logoVisible) * (1 - eased(OnboardingIntroTiming.dissolve, 3.3))
+            let writing = reduceMotion ? 0 : penProgress(OnboardingIntroTiming.logo, OnboardingIntroTiming.logoVisible)
+            let logoOpacity = reduceMotion ? 0 : 1 - eased(OnboardingIntroTiming.dissolve,
+                                                          OnboardingIntroTiming.dissolve + OnboardingIntroTiming.logoFade)
             let shape = OnboardingBloomShape(morph: morph)
 
             ZStack {
@@ -62,20 +66,28 @@ struct OnboardingIntroArtwork: View {
                 .opacity(bloom)
                 .shadow(color: .black.opacity(0.16 * expansion), radius: 22, y: 8)
 
-                Image("OnboardingBird")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 92, height: 76)
-                    .rotationEffect(.degrees(-12))
-                    .scaleEffect(0.94 + eased(OnboardingIntroTiming.logo, 2.5) * 0.06)
-                    .blur(radius: 10 * (1 - logo))
-                    .opacity(logo)
+                ZenHandwrittenLogo(progress: writing)
+                    .foregroundStyle(OnboardingPalette.accent)
+                    .frame(width: 180)
+                    .shadow(color: OnboardingPalette.background.opacity(0.3), radius: 6, y: 2)
+                    .scaleEffect(0.97 + eased(OnboardingIntroTiming.logo, OnboardingIntroTiming.dissolve) * 0.03)
+                    .opacity(logoOpacity)
                     .accessibilityHidden(true)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .allowsHitTesting(false)
         .accessibilityHidden(true)
+    }
+
+    /// A pen accelerates gently and settles, rather than easing to a crawl.
+    private func penProgress(_ start: Double, _ end: Double) -> CGFloat {
+        let t = min(1, max(0, (elapsed - start) / (end - start)))
+        let speedUp = 0.15, slowDown = 0.12
+        let speed = 1 / (1 - (speedUp + slowDown) / 2)   // steady speed between the two
+        if t < speedUp { return speed * t * t / (2 * speedUp) }
+        if t > 1 - slowDown { return 1 - speed * (1 - t) * (1 - t) / (2 * slowDown) }
+        return speed * (t - speedUp / 2)
     }
 
     private func eased(_ start: Double, _ end: Double) -> CGFloat {

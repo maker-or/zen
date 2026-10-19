@@ -7,6 +7,7 @@ struct OnboardingView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ObservedObject private var state: ZenState
     @ObservedObject private var service: TranscriptionService
+    @ObservedObject private var autoPaste = AutoPasteService.shared
     @State private var step: OnboardingStep
     @State private var microphoneStatus = AVAuthorizationStatus.notDetermined
     @State private var requestingMicrophone = false
@@ -49,10 +50,12 @@ struct OnboardingView: View {
         .background(OnboardingWindowControls())
         .preferredColorScheme(.dark)
         .onAppear {
+            autoPaste.refreshPermission()
             refreshMicrophoneStatus()
             if !state.transcriptionModel.isSupported { state.transcriptionModel = .voz }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            autoPaste.refreshPermission()
             refreshMicrophoneStatus()
         }
         .task(id: requestingMicrophone) {
@@ -97,6 +100,29 @@ struct OnboardingView: View {
                         .buttonStyle(.plain)
                         .underline()
                         .onboardingReveal(index: 9)
+                    }
+                }
+
+                if step == .paste {
+                    if autoPaste.isTrusted {
+                        Label("Automatic paste is ready", systemImage: "checkmark.circle.fill")
+                            .font(.system(size: 15, weight: .medium, design: .rounded))
+                            .foregroundStyle(OnboardingPalette.accent)
+                            .onboardingReveal(index: 8)
+                    } else {
+                        Button("Enable automatic paste") {
+                            state.autoPasteEnabled = true
+                            AccessibilityPermissionGuide.shared.show()
+                        }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .padding(.horizontal, 20).padding(.vertical, 14)
+                        .background(OnboardingPalette.accent.opacity(0.12), in: .capsule)
+                        .onboardingReveal(index: 8)
+                        Text("Optional — you can continue and paste from the clipboard.")
+                            .font(.system(size: 13, design: .rounded))
+                            .foregroundStyle(OnboardingPalette.secondary)
+                            .onboardingReveal(index: 9)
                     }
                 }
 
@@ -165,6 +191,7 @@ struct OnboardingView: View {
         case .capture: return "Press ⌥ + Space"
         case .privacy: return "Your voice stays\non your Mac."
         case .models: return "Choose your\nspeech model."
+        case .paste: return "Speak your words.\nWrite them anywhere."
         case .microphone:
             switch microphoneStatus {
             case .authorized: return "Microphone ready.\nYou’re all set."
@@ -179,11 +206,13 @@ struct OnboardingView: View {
         switch step {
         case .welcome: return ""
         case .capture:
-            return "Option + Space starts and stops recording from any app.\nYour transcript is copied to the clipboard and saved to Memos."
+            return "Option + Space starts and stops recording from any app.\nYour words can paste into the focused input and are always copied and saved to Memos."
         case .privacy:
             return "Your audio is transcribed on this device.\nYour recordings are never sent to a server."
         case .models:
             return "Download one model to transcribe offline."
+        case .paste:
+            return "Allow Accessibility access to paste into the text field where you start recording. Your transcript is always copied to the clipboard."
         case .microphone:
             switch microphoneStatus {
             case .authorized:

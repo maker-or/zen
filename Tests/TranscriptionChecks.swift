@@ -12,6 +12,10 @@ struct TranscriptionChecks {
         let defaults = UserDefaults(suiteName: suiteName)!
         defer { defaults.removePersistentDomain(forName: suiteName) }
         let state = ZenState(defaults: defaults)
+        precondition(state.autoPasteEnabled, "Automatic paste defaults to enabled, subject to Accessibility permission")
+        state.autoPasteEnabled = false
+        precondition(!ZenState(defaults: defaults).autoPasteEnabled, "Disabling automatic paste must persist")
+        state.autoPasteEnabled = true
         precondition(!state.hasCompletedOnboarding, "First launch must show onboarding")
         state.hasCompletedOnboarding = true
         precondition(ZenState(defaults: defaults).hasCompletedOnboarding, "Completed onboarding must stay dismissed after relaunch")

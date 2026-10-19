@@ -1,25 +1,24 @@
 {
   "fill" : {
-    "automatic-gradient" : "extended-srgb:0.00000,0.53333,1.00000,1.00000"
+    "solid" : "display-p3:0.45429,0.21059,0.16560,1.00000"
   },
   "groups" : [
     {
       "layers" : [
         {
-          "fill-specializations" : [
-            {
-              "appearance" : "tinted",
-              "value" : "automatic"
-            }
-          ],
-          "hidden" : false,
-          "image-name" : "bird.svg",
-          "name" : "bird",
+          "fill" : {
+            "linear-gradient" : [
+              "srgb:0.83000,0.32199,0.24973,1.00000",
+              "srgb:1.00000,0.39733,0.29931,1.00000"
+            ]
+          },
+          "image-name" : "zen.svg",
+          "name" : "zen",
           "position" : {
-            "scale" : 7,
+            "scale" : 3.5,
             "translation-in-points" : [
               0,
-              0
+              0.2939999999999827
             ]
           }
         }
@@ -30,7 +29,7 @@
       },
       "translucency" : {
         "enabled" : true,
-        "value" : 0.5
+        "value" : 0.3
       }
     }
   ],

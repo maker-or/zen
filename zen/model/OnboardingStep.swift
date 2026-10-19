@@ -1,5 +1,5 @@
 nonisolated enum OnboardingStep: Int, CaseIterable, Identifiable {
-    case welcome, capture, privacy, models, microphone
+    case welcome, capture, privacy, models, paste, microphone
 
     var id: Int { rawValue }
     var next: Self? { Self(rawValue: rawValue + 1) }
@@ -11,6 +11,7 @@ nonisolated enum OnboardingStep: Int, CaseIterable, Identifiable {
         case .capture: return "Recording shortcut"
         case .privacy: return "On-device transcription"
         case .models: return "Model selection and download"
+        case .paste: return "Automatic paste"
         case .microphone: return "Microphone setup"
         }
     }

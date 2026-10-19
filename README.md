@@ -16,7 +16,11 @@ You can also drop any video or audio file into the **Transcribe** tab to extract
 1. Launch Zen, learn the Option+Space shortcut, and enable microphone access when you are ready. Model selection is available in Settings.
 2. Press **Option+Space** to start recording.
 3. Speak, then press **Option+Space** again to stop.
-4. Wait for the on-device transcription to finish. The result is copied to the clipboard automatically.
+4. Wait for the on-device transcription to finish. The result is copied to the clipboard automatically and, with Accessibility enabled, pasted into the input where you started recording.
+
+Enable **Settings → Automatic paste → Paste after recording** and click **Set up automatic paste…** to set up access. A glass guide appears at the bottom of System Settings. Drag the Zen app row into **Privacy & Security → Accessibility**, then turn on its switch. Dragging adds the app; permission is granted only when you enable it. The guide follows the Settings window and closes once access is enabled. Input Monitoring is not needed for the existing Option+Space shortcut. Settings also includes a test input: click it, press Option+Space to record, then press the shortcut again to stop. The status beneath it explains when a result falls back to the clipboard.
+
+Automatic paste is limited to shortcut recordings and the original editable input. If there was no input, focus changed, the app does not expose an editable input through Accessibility, or permission is unavailable, the result stays on the clipboard. Zen never activates another app, pastes into password fields, or submits the text. File transcription retains its existing copy/export behavior.
 
 In the **Memos** tab, you can:
 
@@ -33,7 +37,7 @@ In the **Transcribe** tab, you can:
 
 ## Welcome experience
 
-The introduction has five screens: welcome, the Option+Space shortcut and saved transcripts, on-device transcription, model selection and download, and microphone setup. Every screen is shown in sequence, including when replaying with microphone access already granted. Use the arrows to move forward and back. Permission is requested only after clicking **Enable microphone**; granting it finishes setup. You can skip the introduction or continue with file transcription without granting microphone access. Choose Voz or Phonon-2 on the model screen, then click **Download & Prepare**. Download progress, preparation, and retry states appear there. You can download later or continue while preparation runs in the background. The same saved model selection and preparation status remain available in Settings.
+The introduction has six screens: welcome, the Option+Space shortcut and saved transcripts, on-device transcription, model selection and download, optional automatic-paste setup, and microphone setup. Every screen is shown in sequence, including when replaying with microphone access already granted. Use the arrows to move forward and back. Accessibility is requested only after clicking **Enable automatic paste**; microphone access is requested only after clicking **Enable microphone**. You can skip either permission and continue with clipboard results or file transcription. Choose Voz or Phonon-2 on the model screen, then click **Download & Prepare**. Download progress, preparation, and retry states appear there. You can download later or continue while preparation runs in the background. The same saved model selection and preparation status remain available in Settings.
 
 Completion is saved between launches. Use **Window → Onboarding** or **Settings → Replay introduction** to revisit it in a separate window. Each replay starts at the welcome screen. Text reveals word by word when each screen appears. Reduce Motion uses a short fade without movement or stagger. Completed installations warm cached models at startup; missing models download only when you prepare them or start transcription.
 
@@ -111,6 +115,12 @@ Model preference, cancellation, and timestamp grouping checks are available afte
 
 ```bash
 python3 scripts/check-transcription.py
+```
+
+Automatic-paste fallback and focus checks run without model downloads, Accessibility prompts, or keystrokes sent to other apps:
+
+```bash
+python3 scripts/check-auto-paste.py
 ```
 
 Pass the path to the official `ci/clips/1089-134686-0002.flac` clip from the Phonon-2 model repository to also verify both engines against known speech. This downloads missing model weights and prepares Core ML on first run.

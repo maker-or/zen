@@ -1,9 +1,12 @@
 import SwiftUI
+import AppKit
 
 struct AppSettingsView: View {
     @Environment(\.openWindow) private var openWindow
     @ObservedObject private var state = ZenState.shared
     @ObservedObject private var service = TranscriptionService.shared
+    @ObservedObject private var autoPaste = AutoPasteService.shared
+    @State private var testText = ""
 
     private var model: TranscriptionModel { state.transcriptionModel }
     private var modelState: TranscriptionService.ModelState? { service.modelStates[model] }
@@ -16,6 +19,31 @@ struct AppSettingsView: View {
 
     var body: some View {
         Form {
+            Section {
+                Toggle("Paste after recording", isOn: $state.autoPasteEnabled)
+                if autoPaste.isTrusted {
+                    Label("Accessibility enabled", systemImage: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                } else {
+                    Label("Accessibility access needed for this copy of Zen", systemImage: "hand.raised")
+                        .foregroundStyle(.secondary)
+                }
+                Button(autoPaste.isTrusted ? "Manage Accessibility access…" : "Set up automatic paste…") {
+                    state.autoPasteEnabled = true
+                    AccessibilityPermissionGuide.shared.show()
+                }
+                TextField("Click here, then press ⌥ Space to test", text: $testText)
+                    .textFieldStyle(.roundedBorder)
+                    .accessibilityLabel("Test automatic paste")
+                if let message = autoPaste.deliveryMessage {
+                    Text(message).font(.caption).foregroundStyle(.secondary)
+                }
+            } header: {
+                Text("Automatic paste")
+            } footer: {
+                Text("Paste into the text field where you started recording. If focus changes or there’s no editable field, your transcript stays on the clipboard.")
+            }
+
             Section {
                 Picker("Transcription model", selection: $state.transcriptionModel) {
                     ForEach(TranscriptionModel.allCases) { model in
@@ -64,7 +92,11 @@ struct AppSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 500, height: 430)
+        .frame(width: 500, height: 580)
+        .onAppear { autoPaste.refreshPermission() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            autoPaste.refreshPermission()
+        }
     }
 
     @ViewBuilder

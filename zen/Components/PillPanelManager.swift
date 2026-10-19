@@ -70,6 +70,12 @@ final class PillPanelManager {
 
         print("[PillPanel] Hotkey pressed, current state: \(state.transcriptionState)")
 
+        switch state.transcriptionState {
+        case .idle, .done, .error:
+            AutoPasteService.shared.captureDestination(enabled: state.autoPasteEnabled)
+        default: break
+        }
+
         bringPanelToFront()
 
         switch state.transcriptionState {
@@ -87,6 +93,7 @@ final class PillPanelManager {
 
         let micPermission = AVCaptureDevice.authorizationStatus(for: .audio)
         if micPermission == .denied || micPermission == .restricted {
+            AutoPasteService.shared.discardDestination()
             state.transcriptionState = .error("Mic access denied in System Settings")
             show()
             scheduleHide(delay: 6.0)
@@ -99,6 +106,7 @@ final class PillPanelManager {
                     if granted {
                         self?.startRecording()
                     } else {
+                        AutoPasteService.shared.discardDestination()
                         self?.state.transcriptionState = .error("Mic access denied in System Settings")
                         self?.show()
                         self?.scheduleHide(delay: 6.0)
@@ -124,6 +132,7 @@ final class PillPanelManager {
 
     private func finishTranscription() {
         guard let rawURL = recorder.recordedFileURL else {
+            AutoPasteService.shared.discardDestination()
             print("[PillPanel] No recording file found")
             state.transcriptionState = .error("No recording")
             scheduleHide(delay: 4.0)
@@ -131,6 +140,7 @@ final class PillPanelManager {
         }
 
         guard let fileURL = recorder.convertTo16kHzInt16(sourceURL: rawURL) else {
+            AutoPasteService.shared.discardDestination()
             print("[PillPanel] Audio conversion failed")
             state.transcriptionState = .error("Audio conversion failed")
             scheduleHide(delay: 4.0)
@@ -146,13 +156,16 @@ final class PillPanelManager {
             await transcriber.transcribe(fileURL: fileURL)
 
             if !transcriber.transcript.isEmpty {
+                await AutoPasteService.shared.pasteIfPossible(transcriber.transcript, enabled: state.autoPasteEnabled)
                 state.transcriptionState = .done(transcriber.transcript)
                 state.appendHistory(transcriber.transcript)
                 scheduleHide(delay: 2.0)
             } else if let errorMsg = transcriber.error {
+                AutoPasteService.shared.discardDestination()
                 state.transcriptionState = .error(errorMsg)
                 scheduleHide(delay: 5.0)
             } else {
+                AutoPasteService.shared.discardDestination()
                 state.transcriptionState = .error("No speech detected")
                 scheduleHide(delay: 4.0)
             }

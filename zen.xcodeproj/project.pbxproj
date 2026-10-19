@@ -9,12 +9,18 @@
 /* Begin PBXBuildFile section */
 		A01100000000000000000003 /* PhononCoreML in Frameworks */ = {isa = PBXBuildFile; productRef = A01100000000000000000002 /* PhononCoreML */; };
 		B33F6D832FF3D6810084E9A2 /* Voz in Frameworks */ = {isa = PBXBuildFile; productRef = B33F6D822FF3D6810084E9A2 /* Voz */; };
-		D0C000000000000000000001 /* ZenDockTilePlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = D0C000000000000000000003; };
-		D0C000000000000000000002 /* ZenDockTilePlugin in PlugIns */ = {isa = PBXBuildFile; fileRef = D0C000000000000000000004; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		D0C000000000000000000001 /* ZenDockTilePlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = D0C000000000000000000003 /* ZenDockTilePlugin.m */; };
+		D0C000000000000000000002 /* ZenDockTilePlugin.docktileplugin in Embed Dock Plug-in */ = {isa = PBXBuildFile; fileRef = D0C000000000000000000004 /* ZenDockTilePlugin.docktileplugin */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		D0C000000000000000000005 = {isa = PBXContainerItemProxy; containerPortal = B33F6D582FF3D67F0084E9A2; proxyType = 1; remoteGlobalIDString = D0C000000000000000000006; remoteInfo = ZenDockTilePlugin; };
+		D0C000000000000000000005 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B33F6D582FF3D67F0084E9A2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D0C000000000000000000006;
+			remoteInfo = ZenDockTilePlugin;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -23,7 +29,9 @@
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
-			files = (D0C000000000000000000002, );
+			files = (
+				D0C000000000000000000002 /* ZenDockTilePlugin.docktileplugin in Embed Dock Plug-in */,
+			);
 			name = "Embed Dock Plug-in";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -34,7 +42,7 @@
 		D0C000000000000000000003 /* ZenDockTilePlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ZenDockTilePlugin.m; sourceTree = "<group>"; };
 		D0C000000000000000000004 /* ZenDockTilePlugin.docktileplugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZenDockTilePlugin.docktileplugin; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0C000000000000000000008 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		D0C000000000000000000016 /* Zen-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Configuration/Zen-Info.plist; sourceTree = "<group>"; };
+		D0C000000000000000000016 /* Configuration/Zen-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Configuration/Zen-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -55,7 +63,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		D0C000000000000000000009 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		D0C000000000000000000009 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -64,7 +78,7 @@
 			children = (
 				B33F6D622FF3D67F0084E9A2 /* zen */,
 				D0C000000000000000000010 /* ZenDockTilePlugin */,
-				D0C000000000000000000016 /* Zen-Info.plist */,
+				D0C000000000000000000016 /* Configuration/Zen-Info.plist */,
 				B33F6D612FF3D67F0084E9A2 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -78,7 +92,15 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		D0C000000000000000000010 /* ZenDockTilePlugin */ = {isa = PBXGroup; children = (D0C000000000000000000003, D0C000000000000000000008, ); path = ZenDockTilePlugin; sourceTree = "<group>"; };
+		D0C000000000000000000010 /* ZenDockTilePlugin */ = {
+			isa = PBXGroup;
+			children = (
+				D0C000000000000000000003 /* ZenDockTilePlugin.m */,
+				D0C000000000000000000008 /* Info.plist */,
+			);
+			path = ZenDockTilePlugin;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -94,7 +116,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				D0C000000000000000000011,
+				D0C000000000000000000011 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				B33F6D622FF3D67F0084E9A2 /* zen */,
@@ -110,13 +132,18 @@
 		};
 		D0C000000000000000000006 /* ZenDockTilePlugin */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = D0C000000000000000000012;
-			buildPhases = (D0C000000000000000000013, D0C000000000000000000009, );
-			buildRules = ();
-			dependencies = ();
+			buildConfigurationList = D0C000000000000000000012 /* Build configuration list for PBXNativeTarget "ZenDockTilePlugin" */;
+			buildPhases = (
+				D0C000000000000000000013 /* Sources */,
+				D0C000000000000000000009 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
 			name = ZenDockTilePlugin;
 			productName = ZenDockTilePlugin;
-			productReference = D0C000000000000000000004;
+			productReference = D0C000000000000000000004 /* ZenDockTilePlugin.docktileplugin */;
 			productType = "com.apple.product-type.bundle";
 		};
 /* End PBXNativeTarget section */
@@ -176,11 +203,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		D0C000000000000000000013 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (D0C000000000000000000001, ); runOnlyForDeploymentPostprocessing = 0; };
+		D0C000000000000000000013 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D0C000000000000000000001 /* ZenDockTilePlugin.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		D0C000000000000000000011 = {isa = PBXTargetDependency; target = D0C000000000000000000006; targetProxy = D0C000000000000000000005; };
+		D0C000000000000000000011 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D0C000000000000000000006 /* ZenDockTilePlugin */;
+			targetProxy = D0C000000000000000000005 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -314,17 +352,17 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 8BBD6U48D6;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Configuration/Zen-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = zen;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_FILE = Configuration/Zen-Info.plist;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app needs microphone access for speech-to-text";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -351,17 +389,17 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 8BBD6U48D6;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Configuration/Zen-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = zen;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_FILE = Configuration/Zen-Info.plist;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app needs microphone access for speech-to-text";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -388,7 +426,11 @@
 				ENABLE_APP_SANDBOX = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = ZenDockTilePlugin/Info.plist;
-				OTHER_LDFLAGS = ("$(inherited)", "-framework", AppKit, );
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-framework",
+					AppKit,
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = pipper.dev.zen.docktile;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -404,7 +446,11 @@
 				ENABLE_APP_SANDBOX = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = ZenDockTilePlugin/Info.plist;
-				OTHER_LDFLAGS = ("$(inherited)", "-framework", AppKit, );
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-framework",
+					AppKit,
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = pipper.dev.zen.docktile;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -433,7 +479,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		D0C000000000000000000012 = {isa = XCConfigurationList; buildConfigurations = (D0C000000000000000000014, D0C000000000000000000015, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		D0C000000000000000000012 /* Build configuration list for PBXNativeTarget "ZenDockTilePlugin" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D0C000000000000000000014 /* Debug */,
+				D0C000000000000000000015 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */

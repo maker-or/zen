@@ -1,3 +1,4 @@
+import os
 import AppKit
 import SwiftUI
 import Combine
@@ -60,7 +61,7 @@ final class PillPanelManager {
         hideWorkItem?.cancel()
         hideWorkItem = nil
 
-        print("[PillPanel] Hotkey pressed, current state: \(state.transcriptionState)")
+        Log.recording.notice("Shortcut handled in state \(String(describing: self.state.transcriptionState), privacy: .public)")
 
         switch state.transcriptionState {
         case .idle, .done, .error:
@@ -76,7 +77,7 @@ final class PillPanelManager {
         case .recording:
             stopAndTranscribe()
         case .transcribing:
-            print("[PillPanel] Already transcribing, ignoring")
+            Log.recording.notice("Already transcribing; ignoring shortcut")
         }
     }
 
@@ -108,7 +109,13 @@ final class PillPanelManager {
             return
         }
 
-        recorder.startRecording()
+        guard recorder.startRecording() else {
+            AutoPasteService.shared.discardDestination()
+            state.transcriptionState = .error("Couldn’t open the microphone")
+            show()
+            scheduleHide(delay: 5.0)
+            return
+        }
         state.transcriptionState = .recording
         show()
     }
@@ -125,7 +132,7 @@ final class PillPanelManager {
     private func finishTranscription() {
         guard let rawURL = recorder.recordedFileURL else {
             AutoPasteService.shared.discardDestination()
-            print("[PillPanel] No recording file found")
+            Log.recording.error("No recording file found")
             state.transcriptionState = .error("No recording")
             scheduleHide(delay: 4.0)
             return
@@ -133,7 +140,7 @@ final class PillPanelManager {
 
         guard let fileURL = recorder.convertTo16kHzInt16(sourceURL: rawURL) else {
             AutoPasteService.shared.discardDestination()
-            print("[PillPanel] Audio conversion failed")
+            Log.recording.error("Audio conversion failed")
             state.transcriptionState = .error("Audio conversion failed")
             scheduleHide(delay: 4.0)
             return
@@ -141,11 +148,14 @@ final class PillPanelManager {
 
         try? FileManager.default.removeItem(at: rawURL)
 
-        print("[PillPanel] Transcribing \(fileURL.lastPathComponent)")
         state.transcriptionState = .transcribing
+        let model = state.transcriptionModel
+        Log.recording.notice("Transcribing with \(model.name, privacy: .public)")
 
         Task {
+            let started = Date()
             await transcriber.transcribe(fileURL: fileURL)
+            Log.recording.notice("Transcription finished in \(Date().timeIntervalSince(started), format: .fixed(precision: 2)) s: \(self.transcriber.transcript.count) characters, error: \(self.transcriber.error ?? "none", privacy: .public)")
 
             if !transcriber.transcript.isEmpty {
                 await AutoPasteService.shared.pasteIfPossible(transcriber.transcript, enabled: state.autoPasteEnabled)

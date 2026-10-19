@@ -50,6 +50,15 @@ Finishing onboarding expands the main window to at least 92% of its screen’s u
 
 Open **Zen → Settings…** (**Command+,**) or the toolbar gear to choose a model. The selection is saved and used for every recording. An in-progress transcription keeps the model it started with.
 
+| Model | Languages | Size | Speed | WER |
+|---|---|---|---|---|
+| **Voz** (default) | 25 | 467 MB | ~290× real time | 7.40% |
+| **Phonon-2** | English | 345 MB | ~400× real time | 5.21% |
+
+Both are derived from NVIDIA Parakeet TDT 0.6B v3 and give word timestamps. Sizes are what Zen downloads. Phonon-2's original MLX release is 164 MB, but Zen uses its Core ML build. Figures come from each model's published card. WER is the mean over the Open ASR Leaderboard's English sets: six for Voz, seven for Phonon-2. Speed depends on the Mac. The same cards appear on the onboarding model screen and in **Settings → Model**. Each card shows whether that model is installed, downloading, or ready. Selecting an installed model loads it in the background, so the next recording doesn't wait.
+
+Core ML compiles each model for the Neural Engine the first time it runs on a Mac. This takes about 20 seconds for Voz and up to a minute for Phonon-2, measured on an M-series Mac. After that, macOS caches the result and loads take well under a second, including after app updates.
+
 - **Voz** is the default and supports multilingual transcription.
 - **Phonon-2** transcribes English on Apple silicon using Fermion Research's [native Swift/Core ML package](https://github.com/fermionresearch/phonon-coreml), pinned to version 1.1.2. It needs no Python installation or API server.
 
@@ -114,6 +123,12 @@ Model preference, cancellation, and timestamp grouping checks are available afte
 python3 scripts/check-transcription.py
 ```
 
+Shortcut capture checks feed real key events through the recorder and briefly register a global hotkey, so run them with Zen quit:
+
+```bash
+python3 scripts/check-shortcut-capture.py
+```
+
 Shortcut, memo history, and storage migration checks run without registering hotkeys or touching your data:
 
 ```bash
@@ -152,6 +167,12 @@ Raise `MARKETING_VERSION` or `CURRENT_PROJECT_VERSION` in the project before eac
 `scripts/release.sh --skip-notarize` signs and packages without notarizing. `--adhoc` is a local dry run with no certificate. Neither DMG will open on other Macs without a Gatekeeper warning.
 
 ## Notes
+
+- Zen logs shortcut, recording, and model events to the unified log. To see them:
+
+```bash
+/usr/bin/log show --last 15m --predicate 'subsystem == "pipper.dev.zen"' --info --style compact
+```
 
 - The first recording prompts for microphone permission.
 - The app uses a non-sandboxed target because it registers a global hotkey and accesses system audio services.

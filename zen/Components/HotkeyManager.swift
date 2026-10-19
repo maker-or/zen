@@ -1,3 +1,4 @@
+import os
 import Cocoa
 import Carbon
 import Combine
@@ -32,7 +33,7 @@ final class HotkeyManager: ObservableObject {
         // the Carbon hotkey and the local monitor.
         guard now - lastTriggerUptime > 0.35 else { return }
         lastTriggerUptime = now
-        print("[Hotkey] Triggering hotkey toggle")
+        Log.hotkey.notice("Shortcut pressed")
         onToggle?()
     }
 
@@ -135,17 +136,18 @@ final class HotkeyManager: ObservableObject {
         )
         guard status == noErr else {
             hotKeyRef = nil
-            print("[Hotkey] Failed to register \(shortcut.spokenDescription) (error \(status))")
+            Log.hotkey.error("Failed to register \(shortcut.spokenDescription, privacy: .public) (error \(status))")
             return status == eventHotKeyExistsErr
                 ? "\(shortcut.displayString) is already in use by another app."
                 : "Couldn’t register \(shortcut.displayString) (error \(status))."
         }
-        print("[Hotkey] Registered \(shortcut.spokenDescription) as global hotkey")
+        Log.hotkey.notice("Registered \(shortcut.spokenDescription, privacy: .public) as global hotkey")
         return nil
     }
 
     private func unregisterHotKey() {
         if let hotKeyRef {
+            Log.hotkey.notice("Unregistered global hotkey")
             UnregisterEventHotKey(hotKeyRef)
             self.hotKeyRef = nil
         }

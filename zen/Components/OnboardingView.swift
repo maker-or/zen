@@ -80,13 +80,15 @@ struct OnboardingView: View {
                     OnboardingAnimatedHeading(text: headline)
                         .id(headline)
                 }
-                Text(explanation)
-                    .font(.system(size: 15, design: .rounded))
-                    .foregroundStyle(OnboardingPalette.secondary)
-                    .lineSpacing(6)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: 560, alignment: .leading)
-                    .onboardingReveal(index: 8)
+                if !explanation.isEmpty {
+                    Text(explanation)
+                        .font(.system(size: 15, design: .rounded))
+                        .foregroundStyle(OnboardingPalette.secondary)
+                        .lineSpacing(6)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: 560, alignment: .leading)
+                        .onboardingReveal(index: 8)
+                }
 
                 if step == .capture {
                     ShortcutRecorder(style: .onboarding)
@@ -96,7 +98,7 @@ struct OnboardingView: View {
                 if step == .models {
                     OnboardingModelPicker(state: state, service: service, isPreparing: isPreparingModel)
                         .onboardingReveal(index: 8)
-                    if !service.isModelLoaded(state.transcriptionModel) {
+                    if !service.isModelInstalled(state.transcriptionModel) {
                         Button(isPreparingModel ? "Continue while preparing" : "Download later") {
                             if let next = step.next { navigate(to: next) }
                         }
@@ -115,19 +117,20 @@ struct OnboardingView: View {
                             .foregroundStyle(OnboardingPalette.accent)
                             .onboardingReveal(index: 8)
                     } else {
-                        Button("Enable automatic paste") {
+                        Button {
                             state.autoPasteEnabled = true
                             AccessibilityPermissionGuide.shared.show()
+                        } label: {
+                            Label("Enable automatic paste", systemImage: "hand.tap.fill")
+                                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                .foregroundStyle(OnboardingPalette.background)
+                                .padding(.horizontal, 22).padding(.vertical, 14)
+                                .background(OnboardingPalette.accent, in: .capsule)
+                                .contentShape(.capsule)
                         }
                         .buttonStyle(.plain)
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
-                        .padding(.horizontal, 20).padding(.vertical, 14)
-                        .background(OnboardingPalette.accent.opacity(0.12), in: .capsule)
+                        .pointerStyle(.link)
                         .onboardingReveal(index: 8)
-                        Text("Optional — you can continue and paste from the clipboard.")
-                            .font(.system(size: 13, design: .rounded))
-                            .foregroundStyle(OnboardingPalette.secondary)
-                            .onboardingReveal(index: 9)
                     }
                 }
 
@@ -210,24 +213,15 @@ struct OnboardingView: View {
     private var explanation: String {
         switch step {
         case .welcome: return ""
-        case .capture:
-            return "\(state.recordingShortcut.spokenDescription) starts and stops recording from any app.\nYour words can paste into the focused input and are always copied and saved to Memos."
-        case .privacy:
-            return "Your audio is transcribed on this device.\nYour recordings are never sent to a server."
-        case .models:
-            return "Download one model to transcribe offline."
-        case .paste:
-            return "Allow Accessibility access to paste into the text field where you start recording. Your transcript is always copied to the clipboard."
+        case .capture: return "Start and stop recording from any app."
+        case .privacy: return "Transcribed on this Mac. Never sent anywhere."
+        case .models: return ""
+        case .paste: return "Your words land where you’re typing."
         case .microphone:
             switch microphoneStatus {
-            case .authorized:
-                return "Use \(state.recordingShortcut.spokenDescription) whenever you’re ready to record."
-            case .denied:
-                return "Allow Zen in System Settings → Privacy & Security → Microphone, or continue with file transcription."
-            case .restricted:
-                return "This Mac restricts microphone access.\nYou can still transcribe audio and video files."
-            default:
-                return "Zen needs microphone access to record your voice.\nYou can still transcribe files without it."
+            case .denied: return "Turn on Zen in System Settings → Privacy & Security → Microphone."
+            case .restricted: return "This Mac doesn’t allow microphone access."
+            default: return ""
             }
         }
     }
@@ -235,6 +229,8 @@ struct OnboardingView: View {
     private var primaryButtonTitle: String {
         if requestingMicrophone { return "Waiting for permission…" }
         if step == .models {
+            // An installed model only needs loading, which happens in the background.
+            if service.isModelInstalled(state.transcriptionModel) { return "Continue" }
             switch service.modelStates[state.transcriptionModel] {
             case .ready: return "Continue"
             case .downloading(let fraction): return "Downloading \(Int(fraction * 100))%"
@@ -252,9 +248,13 @@ struct OnboardingView: View {
     }
 
     private func advance() {
-        if step == .models && !service.isModelLoaded(state.transcriptionModel) {
-            prepareSelectedModel()
-            return
+        if step == .models {
+            let model = state.transcriptionModel
+            guard service.isModelInstalled(model) else {
+                prepareSelectedModel()
+                return
+            }
+            service.preloadIfInstalled(model)
         }
         // Permission never skips the instructional pages, including on replay.
         if let next = step.next {
@@ -284,6 +284,7 @@ struct OnboardingView: View {
     }
 
     private var isPreparingModel: Bool {
+        if service.isModelInstalled(state.transcriptionModel) { return false }
         if preparingModel { return true }
         switch service.modelStates[state.transcriptionModel] {
         case .downloading, .loading: return true

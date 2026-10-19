@@ -1,3 +1,4 @@
+import os
 import Foundation
 import Combine
 import AppKit
@@ -56,7 +57,9 @@ final class TranscriptionService: ObservableObject {
     private static let modelPathKey = "vozVerifiedModelPath"
 
     private var verifiedModelPath: String? {
+        // Only the revision this SDK pins: other versions' weights may not match its runtime.
         if let path = UserDefaults.standard.string(forKey: Self.modelPathKey),
+           URL(fileURLWithPath: path).lastPathComponent == VozModel.revision,
            FileManager.default.fileExists(atPath: path) {
             return path
         }
@@ -64,31 +67,40 @@ final class TranscriptionService: ObservableObject {
     }
 
     /// Voz writes `.dal-meta/manifest` only once a download has finished and
-    /// passed verification, so a revision folder holding one can be loaded
-    /// without re-hashing. If the layout ever changes this finds nothing and the
-    /// full `Voz.download` check runs instead.
+    /// passed verification, so the pinned revision's folder holding one can be
+    /// loaded without re-hashing. If the layout ever changes this finds nothing
+    /// and the full `Voz.download` check runs instead.
     private static func completedDownloadPath() -> String? {
         guard let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else { return nil }
-        let root = caches.appendingPathComponent("desert-ant-models/desert-ant-labs/voz", isDirectory: true)
-        let revisions = (try? FileManager.default.contentsOfDirectory(atPath: root.path)) ?? []
-        return revisions
-            .sorted { $0.compare($1, options: .numeric) == .orderedDescending }
-            .map { root.appendingPathComponent($0).path }
-            .first { FileManager.default.fileExists(atPath: "\($0)/.dal-meta/manifest") }
+        let path = caches.appendingPathComponent("desert-ant-models/desert-ant-labs/voz/\(VozModel.revision)").path
+        return FileManager.default.fileExists(atPath: "\(path)/.dal-meta/manifest") ? path : nil
+    }
+
+    /// Whether the model's verified files are on disk, without loading it.
+    /// Cheap enough to call from views.
+    func isModelInstalled(_ model: TranscriptionModel) -> Bool {
+        if isModelLoaded(model) { return true }
+        switch model {
+        case .voz: return verifiedModelPath != nil
+        case .phonon2:
+            return PhononEngine.distribution.installedModels().contains {
+                URL(fileURLWithPath: $0).lastPathComponent == PhononEngine.distribution.revision
+            }
+        }
+    }
+
+    /// Load an installed model in the background, so the first recording
+    /// after switching to it doesn't wait. Never starts a download.
+    func preloadIfInstalled(_ model: TranscriptionModel) {
+        guard model.isSupported, !isModelLoaded(model), isModelInstalled(model) else { return }
+        Task { try? await prepareModel(model) }
     }
 
     /// Warm a cached model. The welcome flow or the first transcription owns
     /// the initial download, so choosing "Download later" is respected.
     func warmup() async {
         let model = ZenState.shared.transcriptionModel
-        switch model {
-        case .voz:
-            guard verifiedModelPath != nil else { return }
-        case .phonon2:
-            guard PhononEngine.distribution.installedModels().contains(where: {
-                URL(fileURLWithPath: $0).lastPathComponent == PhononEngine.distribution.revision
-            }) else { return }
-        }
+        guard isModelInstalled(model) else { return }
         try? await prepareModel(model)
     }
 
@@ -117,7 +129,11 @@ final class TranscriptionService: ObservableObject {
 
     private func loadVoz() async throws -> Voz {
         modelStates[.voz] = .loading
-        defer { downloadProgressHandlers = [] }
+        let started = Date()
+        defer {
+            downloadProgressHandlers = []
+            Log.models.notice("Voz load finished in \(Date().timeIntervalSince(started), format: .fixed(precision: 2)) s")
+        }
 
         if let path = verifiedModelPath {
             do {
@@ -168,7 +184,11 @@ final class TranscriptionService: ObservableObject {
 
     private func loadPhonon() async throws -> PhononEngine {
         modelStates[.phonon2] = .loading
-        defer { phononProgressHandlers = [] }
+        let started = Date()
+        defer {
+            phononProgressHandlers = []
+            Log.models.notice("Phonon-2 load finished in \(Date().timeIntervalSince(started), format: .fixed(precision: 2)) s")
+        }
         let engine = try await PhononEngine.load { [weak self] fraction in
             Task { @MainActor [weak self] in
                 guard let self, self.phononEngine == nil else { return }

@@ -1,3 +1,4 @@
+import os
 import AVFoundation
 import Combine
 
@@ -20,7 +21,11 @@ final class AudioRecorder: NSObject, ObservableObject {
         super.init()
     }
 
-    func startRecording() {
+    /// Starts capturing from the default input. Returns false when the
+    /// microphone couldn't be opened, so callers never show a recording that
+    /// isn't happening. Microphone permission must already be granted.
+    @discardableResult
+    func startRecording() -> Bool {
         recordedFileURL = nil
         let audioEngine = AVAudioEngine()
         self.audioEngine = audioEngine
@@ -34,13 +39,17 @@ final class AudioRecorder: NSObject, ObservableObject {
         do {
             try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
         } catch {
-            print("[AudioRecorder] Failed to create recording directory: \(error.localizedDescription)")
-            return
+            Log.recording.error("Failed to create recording directory: \(error.localizedDescription, privacy: .public)")
+            return false
         }
 
+        guard nativeFormat.sampleRate > 0, nativeFormat.channelCount > 0 else {
+            Log.recording.error("No usable input device (format \(nativeFormat.description, privacy: .public))")
+            return false
+        }
         guard let audioFile = try? AVAudioFile(forWriting: fileURL, settings: nativeFormat.settings) else {
-            print("[AudioRecorder] Failed to create audio file")
-            return
+            Log.recording.error("Failed to create audio file")
+            return false
         }
         self.audioFile = audioFile
         self.recordedFileURL = fileURL
@@ -63,31 +72,31 @@ final class AudioRecorder: NSObject, ObservableObject {
             }
         }
 
-        let micPermission = AVCaptureDevice.authorizationStatus(for: .audio)
-        if micPermission == .notDetermined {
-            AVCaptureDevice.requestAccess(for: .audio) { granted in
-                if granted {
-                    DispatchQueue.main.async { self.startEngine(audioEngine) }
-                } else {
-                    print("[AudioRecorder] Mic permission denied")
-                }
-            }
-        } else if micPermission == .authorized {
-            startEngine(audioEngine)
-        } else {
-            print("[AudioRecorder] Mic permission denied")
+        guard AVCaptureDevice.authorizationStatus(for: .audio) == .authorized else {
+            Log.recording.error("Microphone permission not granted")
+            discardFailedStart(fileURL)
+            return false
         }
+        audioEngine.prepare()
+        do {
+            try audioEngine.start()
+        } catch {
+            Log.recording.error("Failed to start audio engine: \(error.localizedDescription, privacy: .public)")
+            discardFailedStart(fileURL)
+            return false
+        }
+        isRecording = true
+        Log.recording.notice("Recording started (\(nativeFormat.sampleRate, format: .fixed(precision: 0)) Hz, \(nativeFormat.channelCount) ch)")
+        return true
     }
 
-    private func startEngine(_ engine: AVAudioEngine) {
-        engine.prepare()
-        do {
-            try engine.start()
-            isRecording = true
-            print("[AudioRecorder] Engine started successfully")
-        } catch {
-            print("[AudioRecorder] Failed to start engine: \(error.localizedDescription)")
-        }
+    private func discardFailedStart(_ fileURL: URL) {
+        audioEngine?.inputNode.removeTap(onBus: 0)
+        audioEngine = nil
+        inputNode = nil
+        audioFile = nil
+        recordedFileURL = nil
+        try? FileManager.default.removeItem(at: fileURL)
     }
 
     /// Keeps the mic open for `tail` seconds before stopping, so the last word
@@ -103,7 +112,7 @@ final class AudioRecorder: NSObject, ObservableObject {
         inputNode = nil
         audioFile = nil
         isRecording = false
-        print("[AudioRecorder] Recording stopped")
+        Log.recording.notice("Recording stopped")
     }
 
     func convertTo16kHzInt16(sourceURL: URL) -> URL? {

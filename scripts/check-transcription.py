@@ -18,6 +18,7 @@ if not (products / "PhononCoreML.o").is_file():
 sources = [
     "zen/model/TranscriptionModel.swift", "zen/model/Transcript.swift",
     "zen/model/RecordingShortcut.swift", "zen/model/ZenStorage.swift", "zen/model/Memo.swift",
+    "zen/model/Log.swift",
     "zen/Components/ZenState.swift", "zen/Components/PhononEngine.swift",
     "zen/Components/AudioRecorder.swift",
     "zen/Components/TranscriptionService.swift", "Tests/TranscriptionChecks.swift",

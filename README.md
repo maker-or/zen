@@ -1,8 +1,6 @@
 # Zen
 
-Zen is a macOS voice-memo and media transcription app. Press **Option+Space** (or your own shortcut) from anywhere to record a memo, press it again to stop, and Zen transcribes it completely on-device using **Voz** or **Phonon-2** (Apple Neural Engine). The transcript is copied to the clipboard, saved locally, and shown in the memo grid.
-
-You can also drop any video or audio file into the **Transcribe** tab to extract audio and transcribe it on-device with zero external API calls.
+Zen is a macOS voice-memo app. Press **Option+Space** (or your own shortcut) from anywhere to record a memo, press it again to stop, and Zen transcribes it completely on-device using **Voz** or **Phonon-2** (Apple Neural Engine). The transcript is copied to the clipboard, saved locally, and shown in the memo grid.
 
 ## Requirements
 
@@ -20,20 +18,13 @@ You can also drop any video or audio file into the **Transcribe** tab to extract
 
 Enable **Settings → Automatic paste → Paste after recording** and click **Set up automatic paste…** to set up access. A glass guide appears at the bottom of System Settings. Drag the Zen app row into **Privacy & Security → Accessibility**, then turn on its switch. Dragging adds the app; permission is granted only when you enable it. The guide follows the Settings window and closes once access is enabled. Input Monitoring is not needed for the recording shortcut. Settings also includes a test input: click it, press your recording shortcut to record, then press the shortcut again to stop. The status beneath it explains when a result falls back to the clipboard.
 
-Automatic paste is limited to shortcut recordings and the original editable input. If there was no input, focus changed, the app does not expose an editable input through Accessibility, or permission is unavailable, the result stays on the clipboard. Zen never activates another app, pastes into password fields, or submits the text. File transcription retains its existing copy/export behavior.
+Automatic paste is limited to shortcut recordings and the original editable input. If there was no input, focus changed, the app does not expose an editable input through Accessibility, or permission is unavailable, the result stays on the clipboard. Zen never activates another app, pastes into password fields, or submits the text.
 
-In the **Memos** tab, you can:
+The main window shows your memos. You can:
 
 - Hover over a memo to copy it again or delete it.
 - Choose a background color with the paintbrush button; text automatically uses a contrasting shade.
 - Pinch to preview the grid size, then release to settle into the nearest layout.
-
-In the **Transcribe** tab, you can:
-
-- Drag and drop any video (`.mp4`, `.mov`, `.m4v`, etc.) or audio file (`.mp3`, `.wav`, `.m4a`, `.aac`, `.flac`, etc.).
-- Audio is extracted from video files automatically.
-- Transcribe on-device using the Apple Neural Engine.
-- Copy the transcript, add it to Memos, or export it as a `.txt` file.
 
 ## Recording shortcut
 
@@ -43,7 +34,7 @@ A shortcut needs Control, Option or Command, unless it's a function key (F1–F2
 
 ## Welcome experience
 
-The introduction has six screens: welcome, the recording shortcut and saved transcripts, on-device transcription, model selection and download, optional automatic-paste setup, and microphone setup. Every screen is shown in sequence, including when replaying with microphone access already granted. Use the arrows to move forward and back. Accessibility is requested only after clicking **Enable automatic paste**; microphone access is requested only after clicking **Enable microphone**. You can skip either permission and continue with clipboard results or file transcription. Choose Voz or Phonon-2 on the model screen, then click **Download & Prepare**. Download progress, preparation, and retry states appear there. You can download later or continue while preparation runs in the background. The same saved model selection and preparation status remain available in Settings.
+The introduction has six screens: welcome, the recording shortcut and saved transcripts, on-device transcription, model selection and download, optional automatic-paste setup, and microphone setup. Every screen is shown in sequence, including when replaying with microphone access already granted. Use the arrows to move forward and back. Accessibility is requested only after clicking **Enable automatic paste**; microphone access is requested only after clicking **Enable microphone**. You can skip either permission and grant it later; without automatic paste, results stay on the clipboard. Choose Voz or Phonon-2 on the model screen, then click **Download & Prepare**. Download progress, preparation, and retry states appear there. You can download later or continue while preparation runs in the background. The same saved model selection and preparation status remain available in Settings.
 
 Completion is saved between launches. Use **Window → Onboarding** or **Settings → Replay introduction** to revisit it in a separate window. Each replay starts at the welcome screen. Text reveals word by word when each screen appears. Reduce Motion uses a short fade without movement or stagger. Completed installations warm cached models at startup; missing models download only when you prepare them or start transcription.
 
@@ -57,7 +48,7 @@ Finishing onboarding expands the main window to at least 92% of its screen’s u
 
 ## Transcription models
 
-Open **Zen → Settings…** (**Command+,**) or the toolbar gear to choose a model. The selection is saved and used by both recording and file transcription. An in-progress transcription keeps the model it started with.
+Open **Zen → Settings…** (**Command+,**) or the toolbar gear to choose a model. The selection is saved and used for every recording. An in-progress transcription keeps the model it started with.
 
 - **Voz** is the default and supports multilingual transcription.
 - **Phonon-2** transcribes English on Apple silicon using Fermion Research's [native Swift/Core ML package](https://github.com/fermionresearch/phonon-coreml), pinned to version 1.1.2. It needs no Python installation or API server.
@@ -79,11 +70,11 @@ Phonon-2 weights are downloaded from [FermionResearch/Phonon-2-CoreML](https://h
 ## Architecture
 
 ```text
-Recording shortcut (or File Drop in Transcribe Tab)
+Recording shortcut
     |
-HotkeyManager / TranscribeView
+HotkeyManager -> PillPanelManager
     |
-AudioRecorder / AudioExtractionService -> 16 kHz WAV
+AudioRecorder -> 16 kHz WAV
     |
 TranscriptionService -> selected model: Voz or Phonon-2 (Core ML / Neural Engine)
     |
@@ -98,10 +89,7 @@ Key modules:
 - `zen/Components/ShortcutRecorder.swift`: the shortcut recorder used in Settings and onboarding.
 - `zen/Components/PillPanelManager.swift`: floating recording-status panel and recording state transitions.
 - `zen/Components/AudioRecorder.swift`: microphone capture, audio-level monitoring, and WAV conversion.
-- `zen/Components/AudioExtractionService.swift`: audio extraction from video and audio normalization.
 - `zen/Components/TranscriptionService.swift`: model selection, preparation, on-device transcription, clipboard copy, and local export.
-- `zen/Components/TranscribeView.swift`: drag-and-drop video/audio transcription interface.
-- `zen/Components/TranscribeViewModel.swift`: pipeline orchestration and UI state for media transcription.
 - `zen/Components/ZenState.swift`: shared observable state and transcript history persistence.
 - `zen/Components/GridView.swift`: memo grid, zoom presets, copy, and delete actions.
 

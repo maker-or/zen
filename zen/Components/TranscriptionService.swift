@@ -188,7 +188,7 @@ final class TranscriptionService: ObservableObject {
         }.value
     }
 
-    /// Transcribes an audio file (e.g. from AudioRecorder or extracted from video)
+    /// Transcribes an audio file (e.g. from AudioRecorder)
     /// using the selected model without deleting the source file. Capture the
     /// model once so changing settings cannot switch an in-flight request.
     func transcribeAudioFile(
@@ -266,16 +266,10 @@ final class TranscriptionService: ObservableObject {
 }
 
 enum TranscriptionError: LocalizedError {
-    case noAudioTrackFound
-    case conversionFailed(String)
     case transcriptionFailed(String)
 
     var errorDescription: String? {
         switch self {
-        case .noAudioTrackFound:
-            return "The selected media does not contain an audio track."
-        case .conversionFailed(let msg):
-            return "Audio conversion failed: \(msg)"
         case .transcriptionFailed(let msg):
             return "Transcription failed: \(msg)"
         }

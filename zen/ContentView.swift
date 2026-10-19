@@ -1,10 +1,6 @@
 import SwiftUI
 import AVFoundation
 
-enum AppTab: String {
-    case memos, transcribe
-}
-
 struct ContentView: View {
     @EnvironmentObject var appDelegate: AppDelegate
     @StateObject private var state = ZenState.shared
@@ -12,9 +8,6 @@ struct ContentView: View {
     @State private var settingsContentHeight: CGFloat = 300
     private var theme: ZenTheme { ZenTheme(hex: state.themeHex) }
     @State private var isMicDenied = false
-    // Bound explicitly: with SwiftUI's implicit selection the toolbar tabs could
-    // fall back to Memos when the window refreshed, e.g. after picking a file.
-    @SceneStorage("selectedTab") private var selectedTab: AppTab = .memos
 
     var body: some View {
         NavigationStack {
@@ -38,19 +31,7 @@ struct ContentView: View {
                     .background(Color.yellow.opacity(0.15))
                 }
 
-                TabView(selection: $selectedTab) {
-                    GridView()
-                        .tabItem {
-                            Label("Memos", systemImage: "note.text")
-                        }
-                        .tag(AppTab.memos)
-
-                    TranscribeView()
-                        .tabItem {
-                            Label("Transcribe", systemImage: "waveform.badge.mic")
-                        }
-                        .tag(AppTab.transcribe)
-                }
+                GridView()
             }
             .background(
                 theme.background

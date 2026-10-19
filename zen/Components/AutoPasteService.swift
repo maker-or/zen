@@ -38,8 +38,7 @@ protocol PasteAccess {
     func postPaste(to destination: PasteDestination) -> Bool
 }
 
-/// Only shortcut recordings opt into delivery. File transcription keeps its
-/// existing copy/export behavior, and an absent destination is a normal result.
+/// Only shortcut recordings opt into delivery, and an absent destination is a normal result.
 @MainActor
 final class AutoPasteService: ObservableObject {
     static let shared = AutoPasteService()

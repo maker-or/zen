@@ -68,6 +68,29 @@ struct StateChecks {
         precondition(ZenState(defaults: defaults, storage: storage).transcriptHistory.map(\.text) == ["new memo", "older memo"])
         print("PASS: history and transcripts move into the app folder, other apps' files untouched")
 
+        // An older build opened after the move saves only its new memos to the
+        // old location, including identical ones. All of them must be merged.
+        let legacyHistory = scratch.appendingPathComponent("transcript_history.json")
+        try JSONEncoder().encode(["Read the code base.", "Read the code base.", "Uh"]).write(to: legacyHistory)
+        let reopened = ZenState(defaults: defaults, storage: storage)
+        precondition(reopened.transcriptHistory.map(\.text) == ["Read the code base.", "Read the code base.", "Uh", "new memo", "older memo"],
+                     "Memos saved by an older build after migration must be merged, duplicates included")
+        precondition(Set(reopened.transcriptHistory.map(\.id)).count == 5)
+        precondition(!FileManager.default.fileExists(atPath: legacyHistory.path), "A merged legacy file is removed so it merges once")
+        precondition(ZenState(defaults: defaults, storage: storage).transcriptHistory.count == 5, "Relaunching must not merge again")
+
+        // An older build that was running during the move rewrites its whole
+        // in-memory history plus new memos; only the new ones are added.
+        let current = (0..<4).map { Memo(text: "memo \($0)") }
+        precondition(ZenStorage.merge(legacy: ["fresh", "memo 0", "memo 1", "memo 2"], into: current).map(\.text)
+                     == ["fresh", "memo 0", "memo 1", "memo 2", "memo 3"], "Overlap with existing history is not duplicated")
+        precondition(ZenStorage.merge(legacy: ["memo 0", "memo 1"], into: current).map(\.id) == current.map(\.id),
+                     "A legacy file with nothing new changes nothing")
+        precondition(ZenStorage.merge(legacy: ["memo 0", "memo 0"], into: current).map(\.text).prefix(2) == ["memo 0", "memo 0"],
+                     "Repeated texts that don't line up with existing history are new memos")
+        precondition(ZenStorage.merge(legacy: (0..<100).map { "new \($0)" }, into: current).count == 100, "History stays capped")
+        print("PASS: memos an older build saves after migration are merged once, without duplicating overlap")
+
         // Identical memos: deleting one must remove exactly that one.
         state.appendHistory("Hi, hello.")
         state.appendHistory("between")

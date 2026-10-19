@@ -70,7 +70,7 @@ Phonon-2 weights are downloaded from [FermionResearch/Phonon-2-CoreML](https://h
 
 - Memo history: `~/Library/Application Support/pipper.dev.zen/transcript_history.json`
 - Transcript text files: `~/Library/Application Support/pipper.dev.zen/Transcripts/`
-- Earlier versions stored these directly in `~/Library/Application Support/`. On launch, Zen moves its history file and `transcript_*.txt` files into the folder above and leaves anything else in place.
+- Earlier versions stored these directly in `~/Library/Application Support/`. On launch, Zen moves its history file and `transcript_*.txt` files into the folder above and leaves anything else in place. If an older version saves memos to the old location after that move, they're merged in the next time Zen launches.
 - History is limited to the 100 most recent transcripts. Each memo has its own ID, so deleting one of several identical memos removes only the one you chose. History saved by earlier versions gets IDs on first launch.
 - Model weights: `~/Library/Caches/desert-ant-models/` (separate directories for each model and revision).
 - Compiled Phonon-2 models: `~/Library/Caches/phonon-coreml/`.

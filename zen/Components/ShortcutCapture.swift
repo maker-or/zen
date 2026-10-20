@@ -17,6 +17,10 @@ final class ShortcutCapture: ObservableObject {
 
     private var monitor: Any?
     private var observers: [NSObjectProtocol] = []
+    /// The one modifier key held so far with nothing else, which becomes a
+    /// single-key shortcut if it's released that way.
+    private var soloModifier: UInt16?
+    private var heldWithFunction: NSEvent.ModifierFlags = []
 
     private init() {}
 
@@ -30,6 +34,8 @@ final class ShortcutCapture: ObservableObject {
         isCapturing = true
         message = nil
         heldModifiers = []
+        heldWithFunction = []
+        soloModifier = nil
         HotkeyManager.shared.suspend()
         monitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .flagsChanged]) { [weak self] event in
             guard let self, self.isCapturing else { return event }
@@ -67,16 +73,32 @@ final class ShortcutCapture: ObservableObject {
     func handle(_ event: NSEvent) {
         let flags = event.modifierFlags.intersection([.control, .option, .shift, .command])
         if event.type == .flagsChanged {
+            let held = event.modifierFlags.intersection([.control, .option, .shift, .command, .function])
+            if RecordingShortcut.isModifierKeyDown(event.keyCode, flags: event.modifierFlags) {
+                // Only a modifier pressed while nothing else is held can stand on its own.
+                soloModifier = heldWithFunction.isEmpty ? event.keyCode : nil
+            } else if held.isEmpty, let key = soloModifier {
+                soloModifier = nil
+                heldWithFunction = []
+                heldModifiers = []
+                apply(RecordingShortcut(keyCode: UInt32(key), modifiers: 0))
+                return
+            }
+            heldWithFunction = held
             heldModifiers = flags
             return
         }
         guard event.type == .keyDown, !event.isARepeat else { return }
+        soloModifier = nil
         if event.keyCode == UInt16(kVK_Escape) && flags.isEmpty {
             message = nil
             stop()
             return
         }
-        let shortcut = RecordingShortcut(keyCode: event.keyCode, flags: flags)
+        apply(RecordingShortcut(keyCode: event.keyCode, flags: flags))
+    }
+
+    private func apply(_ shortcut: RecordingShortcut) {
         Log.hotkey.notice("Shortcut capture received \(shortcut.spokenDescription, privacy: .public)")
         if let error = HotkeyManager.shared.setShortcut(shortcut) {
             message = error // Keep listening so another combination can be tried.

@@ -31,6 +31,10 @@ struct ZenApp: App {
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
+    /// For windows outside the main scene, such as Settings, to reach the
+    /// introduction. SwiftUI owns the instance and `NSApp.delegate` is its wrapper.
+    private(set) static weak var shared: AppDelegate?
+
     let state = ZenState.shared
     @Published private(set) var demoOnboardingSessionID: UUID?
     @Published private(set) var isDemoIntroPlaying = false
@@ -46,6 +50,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
     override init() {
         super.init()
+        Self.shared = self
         let arguments = ProcessInfo.processInfo.arguments
         if let index = arguments.firstIndex(of: "--demo-onboarding") {
             let requestID = arguments.indices.contains(index + 1)
@@ -124,6 +129,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         }
     }
 
+    /// Replays the intro and walkthrough, as on first launch, without
+    /// resetting the saved onboarding status.
     @objc func showDemoOnboarding() {
         startDemoOnboarding(sessionID: UUID())
     }
@@ -212,9 +219,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
         PillPanelManager.shared.createPanel()
 
-        HotkeyManager.shared.onToggle = {
-            PillPanelManager.shared.handleHotkey()
-        }
+        HotkeyManager.shared.onPress = { PillPanelManager.shared.shortcutPressed() }
+        HotkeyManager.shared.onRelease = { PillPanelManager.shared.shortcutReleased() }
+        HotkeyManager.shared.onInterrupt = { PillPanelManager.shared.shortcutInterrupted() }
         HotkeyManager.shared.activate()
     }
 }

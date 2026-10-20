@@ -45,9 +45,23 @@
 		D0C000000000000000000016 /* Configuration/Zen-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Configuration/Zen-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		E0C000000000000000000001 /* Exceptions for "zen" folder in "zen" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"skills/cinematic-shot/SKILL.md",
+				"skills/sound-design/SKILL.md",
+			);
+			target = B33F6D5F2FF3D67F0084E9A2 /* zen */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		B33F6D622FF3D67F0084E9A2 /* zen */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E0C000000000000000000001 /* Exceptions for "zen" folder in "zen" target */,
+			);
 			path = zen;
 			sourceTree = "<group>";
 		};

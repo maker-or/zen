@@ -38,6 +38,65 @@ struct StateChecks {
         precondition(RecordingShortcut(keyCode: UInt32(kVK_ANSI_D), modifiers: controlOption).validationError == nil)
         print("PASS: shortcut conversion, display, validation, reserved combinations")
 
+        let rightControl = RecordingShortcut(keyCode: UInt32(kVK_RightControl), modifiers: 0)
+        precondition(rightControl.validationError == nil && rightControl.isModifierOnly, "Right Control alone is a shortcut")
+        precondition(rightControl.displayString == "Right Control" && rightControl.spokenDescription == "Right Control")
+        precondition(RecordingShortcut(keyCode: UInt32(kVK_Function), modifiers: 0).validationError == nil, "fn alone is a shortcut")
+        precondition(RecordingShortcut(keyCode: UInt32(kVK_Control), modifiers: 0).validationError != nil,
+                     "Left Control alone would start with every Control shortcut")
+        precondition(!RecordingShortcut.default.isModifierOnly)
+        // Right Control's own device bit, not just "a Control key".
+        let rightDown = NSEvent.ModifierFlags(rawValue: NSEvent.ModifierFlags.control.rawValue | 0x2000)
+        let leftDown = NSEvent.ModifierFlags(rawValue: NSEvent.ModifierFlags.control.rawValue | 0x0001)
+        precondition(RecordingShortcut.isModifierKeyDown(UInt16(kVK_RightControl), flags: rightDown))
+        precondition(!RecordingShortcut.isModifierKeyDown(UInt16(kVK_RightControl), flags: leftDown),
+                     "Left Control held doesn't count as Right Control")
+        precondition(!RecordingShortcut.isModifierKeyDown(UInt16(kVK_RightControl), flags: []), "Released")
+        precondition(RecordingShortcut.isModifierKeyDown(UInt16(kVK_Function), flags: .function))
+        print("PASS: single modifier keys: right-hand keys and fn allowed, left keys rejected, left and right told apart")
+
+        let hold = ShortcutGesture.holdThreshold, window = ShortcutGesture.doubleTapWindow
+        var gesture = ShortcutGesture()
+        // Hold to talk.
+        precondition(gesture.press(at: 10, status: .idle) == .start)
+        precondition(gesture.release(at: 10 + hold + 0.1, isRecording: true, singleKey: false) == .stop, "Releasing a hold stops")
+        // A single tap of a key combination talks hands-free; the next press finishes.
+        precondition(gesture.press(at: 20, status: .idle) == .start)
+        precondition(gesture.release(at: 20.1, isRecording: true, singleKey: false) == .none, "A tap keeps listening")
+        precondition(gesture.press(at: 25, status: .recording) == .stop, "The next press finishes")
+        precondition(gesture.release(at: 25.1, isRecording: false, singleKey: false) == .none)
+        // Double tap: the second tap doesn't stop it.
+        precondition(gesture.press(at: 30, status: .idle) == .start)
+        _ = gesture.release(at: 30.1, isRecording: true, singleKey: false)
+        precondition(gesture.press(at: 30.1 + window / 2, status: .recording) == .none, "A second tap keeps listening")
+        precondition(gesture.release(at: 30.4, isRecording: true, singleKey: false) == .none)
+        precondition(gesture.press(at: 30.5, status: .recording) == .stop, "After a double tap, any press finishes")
+        _ = gesture.release(at: 30.6, isRecording: false, singleKey: false)
+        // A single key: one tap is dropped, a double tap talks hands-free.
+        precondition(gesture.press(at: 40, status: .idle) == .start)
+        precondition(gesture.release(at: 40.1, isRecording: true, singleKey: true) == .waitForSecondTap)
+        precondition(gesture.secondTapTimedOut() == .cancel, "A stray tap of Right Control is dropped")
+        precondition(gesture.press(at: 50, status: .idle) == .start)
+        _ = gesture.release(at: 50.1, isRecording: true, singleKey: true)
+        precondition(gesture.press(at: 50.2, status: .recording) == .none)
+        precondition(gesture.secondTapTimedOut() == .none, "The second tap arrived in time")
+        precondition(gesture.release(at: 50.3, isRecording: true, singleKey: true) == .none)
+        precondition(gesture.press(at: 53, status: .recording) == .stop)
+        _ = gesture.release(at: 53.1, isRecording: false, singleKey: true)
+        // Right Control + C drops what the press started.
+        precondition(gesture.press(at: 60, status: .idle) == .start)
+        precondition(gesture.interrupt() == .cancel)
+        precondition(gesture.release(at: 60.5, isRecording: false, singleKey: true) == .none)
+        // Busy transcribing ignores the shortcut; a failed start forgets the press.
+        precondition(gesture.press(at: 70, status: .busy) == .none)
+        precondition(gesture.press(at: 80, status: .idle) == .start)
+        precondition(gesture.release(at: 80.5, isRecording: false, singleKey: false) == .none, "No microphone: nothing to stop")
+        // Hands-free left over from an ended recording doesn't swallow the next press.
+        precondition(gesture.press(at: 90, status: .idle) == .start)
+        _ = gesture.release(at: 90.1, isRecording: true, singleKey: false)
+        precondition(gesture.press(at: 95, status: .idle) == .start, "The recording ended some other way")
+        print("PASS: hold to talk, tap and double tap for hands-free, stray single-key taps and chords dropped")
+
         let scratch = FileManager.default.temporaryDirectory.appendingPathComponent("zen-state-checks-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: scratch, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: scratch) }
@@ -117,5 +176,14 @@ struct StateChecks {
         precondition(ZenState(defaults: defaults, storage: storage).recordingShortcut == .default,
                      "An invalid saved shortcut falls back to the default")
         print("PASS: shortcut persistence and invalid preference fallback")
+
+        precondition(state.showsIdleWidget && state.widgetPosition == .bottom, "The small widget waits at the bottom by default")
+        state.showsIdleWidget = false
+        state.widgetPosition = .top
+        let relaunched = ZenState(defaults: defaults, storage: storage)
+        precondition(!relaunched.showsIdleWidget && relaunched.widgetPosition == .top, "Widget settings survive relaunch")
+        precondition(state.themeHex == ZenState.defaultThemeHex && ZenState.defaultThemeHex == "330000",
+                     "New installations open in onboarding's burgundy")
+        print("PASS: widget visibility, position and theme defaults")
     }
 }

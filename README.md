@@ -1,6 +1,6 @@
 # Zen
 
-Zen is a macOS voice-memo app. Press **Option+Space** (or your own shortcut) from anywhere to record a memo, press it again to stop, and Zen transcribes it completely on-device using **Voz** or **Phonon-2** (Apple Neural Engine). The transcript is copied to the clipboard, saved locally, and shown in the memo grid.
+Zen is a macOS voice-memo app. Hold **Option+Space** (or your own shortcut) from anywhere to record a memo and let go to stop, or double-tap it to talk hands-free. Zen transcribes it completely on-device using **Voz** or **Phonon-2** (Apple Neural Engine). The transcript is copied to the clipboard, saved locally, and shown in the memo grid.
 
 ## Requirements
 
@@ -11,12 +11,12 @@ Zen is a macOS voice-memo app. Press **Option+Space** (or your own shortcut) fro
 
 ## Usage
 
-1. Launch Zen, learn the recording shortcut (or choose your own), and enable microphone access when you are ready. Model selection is available in Settings.
-2. Press **Option+Space** to start recording.
-3. Speak, then press **Option+Space** again to stop.
+1. Launch Zen, enable microphone access when you are ready, then learn the recording shortcut (or choose your own). Model selection is available in Settings.
+2. Hold **Option+Space** and speak.
+3. Let go to stop. To talk hands-free instead, tap or double-tap it, then press it again when you're done.
 4. Wait for the on-device transcription to finish. The result is copied to the clipboard automatically and, with Accessibility enabled, pasted into the input where you started recording.
 
-Enable **Settings → General → Paste after recording** and click **Set up…** to set up access. A glass guide appears at the bottom of System Settings. Drag the Zen app row into **Privacy & Security → Accessibility**, then turn on its switch. Dragging adds the app; permission is granted only when you enable it. The guide follows the Settings window and closes once access is enabled. Input Monitoring is not needed for the recording shortcut. The General tab also includes a test input: click it, press your recording shortcut to record, then press the shortcut again to stop. The status beneath it explains when a result falls back to the clipboard.
+Enable **Settings → General → Paste after recording** and click **Set up…** to set up access. A glass guide appears at the bottom of System Settings. Drag the Zen app row into **Privacy & Security → Accessibility**, then turn on its switch. Dragging adds the app; permission is granted only when you enable it. The guide follows the Settings window and closes once access is enabled. Input Monitoring is not needed for the recording shortcut. The General tab also includes a test input: click it, then hold your recording shortcut while you speak. The status beneath it explains when a result falls back to the clipboard.
 
 Automatic paste is limited to shortcut recordings and the original editable input. If there was no input, focus changed, the app does not expose an editable input through Accessibility, or permission is unavailable, the result stays on the clipboard. Zen never activates another app, pastes into password fields, or submits the text.
 
@@ -28,15 +28,27 @@ The main window shows your memos. You can:
 
 ## Recording shortcut
 
-The default shortcut is **Option+Space**. To change it, open **Settings → General**, click the shortcut and press a new key combination. You can also choose **Use a different shortcut** on the onboarding shortcut screen. Press **Escape** to cancel, or use the reset button to return to Option+Space. Your choice is saved between launches and appears throughout the app.
+The default shortcut is **Option+Space**. To change it, open **Settings → General**, click the shortcut and press a new key combination. You can also choose **Change shortcut** on the onboarding shortcut screen. Press **Escape** to cancel, or use the reset button to return to Option+Space. Your choice is saved between launches and appears throughout the app.
 
-A shortcut needs Control, Option or Command, unless it's a function key (F1–F20). Combinations used by macOS or standard editing, such as ⌘C, ⌘Space and the screenshot shortcuts, are rejected. ⌘V is also rejected because automatic paste uses it. If the shortcut can't be registered, for example because another app already uses it, Zen keeps your previous shortcut and explains why in Settings.
+A shortcut needs Control, Option or Command, unless it's a function key (F1–F20) or a single right-side modifier key. **Right Control**, **Right Option**, **Right Command**, **Right Shift** and **fn** work on their own; press and release one while the recorder is listening. The left modifiers can't stand alone because they start too many other shortcuts. A single-key shortcut works in Zen right away and in other apps once Zen has Accessibility access, the same access automatic paste uses. Settings says so until access is granted. Combinations used by macOS or standard editing, such as ⌘C, ⌘Space and the screenshot shortcuts, are rejected. ⌘V is also rejected because automatic paste uses it. If the shortcut can't be registered, for example because another app already uses it, Zen keeps your previous shortcut and explains why in Settings.
+
+Recording starts the moment the shortcut goes down, so nothing is lost while Zen tells a hold from a tap:
+
+- **Hold** it for at least 0.35 seconds to talk. Letting go transcribes and pastes.
+- **Double-tap** it to talk hands-free. The next press finishes.
+- A key combination such as Option+Space also starts hands-free on a single tap. A single-key shortcut needs the double tap, so a stray tap of Right Control is dropped, and using it with another key, such as Right Control+C, drops the recording too.
+
+The onboarding shortcut screen reacts when you press the shortcut: the keycap goes down and lights up, and a line confirms it works.
+
+## Recording widget
+
+A small pill shows what Zen is doing: a few resting bars while idle, a waveform while recording, then a spinner and a check. Hover over it while idle to see the shortcut, and click it to start or finish a hands-free recording. It sits centered at the bottom of the screen above the Dock by default. To move it to the top or hide it between recordings, use **Settings → General** or right-click the widget. It's exactly the pill's size, so it never blocks clicks around it.
 
 ## Welcome experience
 
-The introduction has six screens: welcome, the recording shortcut and saved transcripts, on-device transcription, model selection and download, optional automatic-paste setup, and microphone setup. Every screen is shown in sequence, including when replaying with microphone access already granted. Use the arrows to move forward and back. Accessibility is requested only after clicking **Enable automatic paste**; microphone access is requested only after clicking **Enable microphone**. You can skip either permission and grant it later; without automatic paste, results stay on the clipboard. Choose Voz or Phonon-2 on the model screen, then click **Download & Prepare**. Download progress, preparation, and retry states appear there. You can download later or continue while preparation runs in the background. The same saved model selection and preparation status remain available in Settings.
+The introduction has six screens: welcome, on-device transcription, model selection and download, optional automatic-paste setup, microphone setup, and the recording shortcut. The shortcut comes last, so it can be tried once Zen has the access it needs. Every screen is shown in sequence, including when replaying with microphone access already granted. Use the arrows to move forward and back. Accessibility is requested only after clicking **Enable automatic paste**; microphone access is requested only after clicking **Enable microphone**. You can skip either permission and grant it later; without automatic paste, results stay on the clipboard. Choose Voz or Phonon-2 on the model screen, then click **Download & Prepare**. Download progress, preparation, and retry states appear there. You can download later or continue while preparation runs in the background. The same saved model selection and preparation status remain available in Settings.
 
-Completion is saved between launches. Use **Window → Onboarding** or **Settings → About → Replay** to revisit it in a separate window. Each replay starts at the welcome screen. Text reveals word by word when each screen appears. Reduce Motion uses a short fade without movement or stagger. Completed installations warm cached models at startup; missing models download only when you prepare them or start transcription.
+Completion is saved between launches. **Settings → About → Replay** plays the whole introduction again, with the handwritten zen and its music, without resetting the saved status. **Window → Onboarding** revisits just the walkthrough in a separate window. Each replay starts at the welcome screen. Text reveals word by word when each screen appears. Reduce Motion uses a short fade without movement or stagger. Completed installations warm cached models at startup; missing models download only when you prepare them or start transcription.
 
 On first launch, a blurred bloom expands over the desktop into a pink-and-burgundy window, writes the handwritten “zen” wordmark stroke by stroke, and dissolves into the welcome screen. The original bundled score shares cue points with the visual timeline. Use the speaker control to mute, or **Escape / Skip intro** to go straight to onboarding. Reduce Motion uses a short window fade without the bloom or score. The main app stays hidden until the walkthrough is finished. Quitting before then plays the intro again on the next launch.
 
@@ -93,10 +105,12 @@ ZenState -> clipboard, local files, memo grid
 Key modules:
 
 - `zen/zenApp.swift`: app startup, model warm-up, and dependency wiring.
-- `zen/Components/HotkeyManager.swift`: global Carbon hotkey registration, debouncing, and shortcut changes.
+- `zen/Components/HotkeyManager.swift`: the shortcut going down and up, as a Carbon hotkey or a watched single modifier key, and shortcut changes.
+- `zen/model/ShortcutGesture.swift`: turns those presses into hold-to-talk, hands-free, and dropped recordings.
+- `zen/Components/ShortcutPressMonitor.swift`: shows the shortcut working on the onboarding screen.
 - `zen/model/RecordingShortcut.swift`: the saved shortcut, its display names, and validation.
 - `zen/Components/ShortcutRecorder.swift`: the shortcut recorder used in Settings and onboarding.
-- `zen/Components/PillPanelManager.swift`: floating recording-status panel and recording state transitions.
+- `zen/Components/PillPanelManager.swift`: the recording widget, and recording state transitions.
 - `zen/Components/AudioRecorder.swift`: microphone capture, audio-level monitoring, and WAV conversion.
 - `zen/Components/TranscriptionService.swift`: model selection, preparation, on-device transcription, clipboard copy, and local export.
 - `zen/Components/ZenState.swift`: shared observable state and transcript history persistence.
@@ -129,7 +143,7 @@ Shortcut capture checks feed real key events through the recorder and briefly re
 python3 scripts/check-shortcut-capture.py
 ```
 
-Shortcut, memo history, and storage migration checks run without registering hotkeys or touching your data:
+Shortcut, gesture, widget setting, memo history, and storage migration checks run without registering hotkeys or touching your data:
 
 ```bash
 python3 scripts/check-state.py

@@ -8,7 +8,7 @@ import tempfile
 root = Path(__file__).resolve().parents[1]
 sources = [
     "zen/model/RecordingShortcut.swift", "zen/model/ZenStorage.swift", "zen/model/Memo.swift",
-    "zen/model/TranscriptionModel.swift", "zen/Components/ZenState.swift",
+    "zen/model/TranscriptionModel.swift", "zen/model/ShortcutGesture.swift", "zen/Components/ZenState.swift",
     "Tests/StateChecks.swift",
 ]
 with tempfile.TemporaryDirectory(prefix="zen-state-checks-") as scratch:

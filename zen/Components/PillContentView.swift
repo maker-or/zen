@@ -1,74 +1,116 @@
 import AppKit
 import SwiftUI
 
+/// The recording widget: a small pill that stays out of the way while idle
+/// and grows only as much as each state needs. Click it to start or finish a
+/// recording; right-click it to move or hide it.
 struct PillContentView: View {
     @ObservedObject var state: ZenState = .shared
     @ObservedObject var recorder: AudioRecorder = .shared
+    @ObservedObject var hover: PillHover
+
+    private var isHovering: Bool { hover.isHovering }
 
     var body: some View {
-        Group {
-            switch state.transcriptionState {
-            case .idle:
-                idleView
-            case .recording:
-                recordingView
-            case .transcribing:
-                transcribingView
-            case .done:
-                doneView
-            case .error(let message):
-                errorView(message: message)
+        pill
+            // Where the pill is, so only it takes clicks; see `PillPanelManager.updateHover`.
+            .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
+                PillPanelManager.shared.pillFrameChanged($0)
             }
-        }
-        .glassEffect(.regular, in: .capsule)
+            .padding(.vertical, 6) // Room for the glass edge.
+            // Against the screen edge it's placed at, growing away from it.
+            .frame(maxWidth: .infinity, maxHeight: .infinity,
+                   alignment: state.widgetPosition == .top ? .top : .bottom)
     }
 
-    private var idleView: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "mic.fill")
-                .font(.system(size: 16, weight: .medium))
-            Text("Ready")
-                .font(.system(size: 13, weight: .medium))
+    /// One glass capsule whose size animates between states while its
+    /// contents cross-fade.
+    private var pill: some View {
+        ZStack {
+            switch state.transcriptionState {
+            case .idle:
+                idleView.transition(Self.swap)
+            case .recording:
+                recordingView.transition(Self.swap)
+            case .transcribing:
+                transcribingView.transition(Self.swap)
+            case .done:
+                doneView.transition(Self.swap)
+            case .error(let message):
+                errorView(message: message).transition(Self.swap)
+            }
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 8)
-        .frame(height: 52)
+        .clipShape(.capsule) // Nothing shows outside the pill while it resizes.
+        .glassEffect(.regular, in: .capsule)
+        .contentShape(.capsule)
+        .onTapGesture { PillPanelManager.shared.widgetClicked() }
+        .contextMenu { menu }
+        .animation(.smooth(duration: 0.32), value: state.transcriptionState)
+        .animation(.smooth(duration: 0.24), value: isHovering)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityHint(state.transcriptionState == .recording ? "Finishes the recording" : "Starts a recording")
+    }
+
+    private static let swap = AnyTransition.opacity.combined(with: .scale(scale: 0.85))
+
+    /// A few resting bars; hovering shows how to start.
+    private var idleView: some View {
+        HStack(spacing: 6) {
+            HStack(spacing: 2) {
+                ForEach(0..<5, id: \.self) { _ in
+                    Capsule().fill(.primary.opacity(0.55)).frame(width: 2, height: 4)
+                }
+            }
+            if isHovering {
+                Text("Hold \(state.recordingShortcut.displayString)")
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .foregroundStyle(.primary.opacity(0.8))
+                    .fixedSize()
+                    // Gone quickly as the pill starts to shrink; in once it has grown.
+                    .transition(.asymmetric(
+                        insertion: .opacity.animation(.smooth(duration: 0.18).delay(0.1)),
+                        removal: .opacity.animation(.easeOut(duration: 0.08))))
+            }
+        }
+        .padding(.horizontal, isHovering ? 12 : 10)
+        .frame(height: isHovering ? 26 : 16)
+        .accessibilityLabel("Zen, ready. Hold \(state.recordingShortcut.spokenDescription) to talk")
     }
 
     private var recordingView: some View {
-        WaveformView(level: recorder.audioLevel)
-            .frame(width: 80, height: 30)
-            .padding(.horizontal, 24)
-            .padding(.vertical, 8)
-            .frame(height: 52)
+        WaveformView(level: recorder.audioLevel, barCount: 14)
+            .frame(width: 48, height: 16)
+            .padding(.horizontal, 14)
+            .frame(height: 30)
+            .accessibilityLabel("Recording")
     }
 
     private var transcribingView: some View {
         ProgressView()
-            .scaleEffect(0.7)
-            .controlSize(.small)
-            .padding(.horizontal, 24)
-            .padding(.vertical, 8)
-            .frame(height: 52)
+            .controlSize(.mini)
+            .padding(.horizontal, 22)
+            .frame(height: 30)
+            .accessibilityLabel("Transcribing")
     }
 
     private var doneView: some View {
-        Image(systemName: "checkmark.circle.fill")
-            .font(.system(size: 16))
+        Image(systemName: "checkmark")
+            .font(.system(size: 12, weight: .bold))
             .foregroundStyle(.green)
-            .padding(.horizontal, 24)
-            .padding(.vertical, 8)
-            .frame(height: 52)
+            .padding(.horizontal, 22)
+            .frame(height: 30)
+            .accessibilityLabel("Done")
     }
 
     private func errorView(message: String) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 8) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 16, weight: .semibold))
+                .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.yellow)
 
             Text(message)
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(.primary)
                 .fixedSize(horizontal: true, vertical: false)
 
@@ -80,22 +122,28 @@ struct PillContentView: View {
                 } label: {
                     Text("Open Settings")
                         .font(.system(size: 11, weight: .semibold))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
                         .background(Color.yellow.opacity(0.25), in: .rect(cornerRadius: 6))
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 8)
-        .frame(height: 52)
+        .padding(.horizontal, 14)
+        .frame(height: 30)
+    }
+
+    @ViewBuilder private var menu: some View {
+        Picker("Position", selection: $state.widgetPosition) {
+            ForEach(WidgetPosition.allCases) { Text($0.title).tag($0) }
+        }
+        Toggle("Show When Idle", isOn: $state.showsIdleWidget)
     }
 }
 
 struct WaveformView: View {
     let level: Float
-    private let barCount = 20
+    var barCount = 20
 
     var body: some View {
         GeometryReader { geometry in
@@ -146,8 +194,8 @@ struct PillPreview: View {
     @StateObject private var previewState = ZenState()
 
     var body: some View {
-        PillContentView(state: previewState, recorder: AudioRecorder.shared)
-            .frame(width: 480, height: 52)
+        PillContentView(state: previewState, recorder: AudioRecorder.shared, hover: PillHover())
+            .frame(width: 420, height: 56)
             .padding()
             .background(Color.black.opacity(0.3))
             .onAppear { configure(previewState) }

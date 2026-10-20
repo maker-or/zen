@@ -40,6 +40,32 @@ nonisolated struct RecordingShortcut: Hashable, Codable, Sendable {
             && event.modifierFlags.intersection([.control, .option, .shift, .command]) == modifierFlags
     }
 
+    // MARK: Single modifier keys
+
+    /// A modifier key pressed on its own, like Right Control. Carbon can't
+    /// register these, so they're watched through key events instead.
+    var isModifierOnly: Bool { modifiers == 0 && Self.soloModifierKeyCodes.contains(Int(keyCode)) }
+
+    /// The right-hand modifiers and fn: the left ones start too many other shortcuts.
+    static let soloModifierKeyCodes: Set<Int> = [
+        kVK_RightControl, kVK_RightOption, kVK_RightCommand, kVK_RightShift, kVK_Function
+    ]
+
+    static func isModifierKey(_ keyCode: UInt16) -> Bool { modifierKeyCodes.contains(Int(keyCode)) }
+
+    /// Whether the modifier key a `flagsChanged` event is about went down. The
+    /// device-dependent bits tell the left and right keys apart.
+    static func isModifierKeyDown(_ keyCode: UInt16, flags: NSEvent.ModifierFlags) -> Bool {
+        let masks: [Int: UInt] = [
+            kVK_Control: 0x0001, kVK_Shift: 0x0002, kVK_RightShift: 0x0004, kVK_Command: 0x0008,
+            kVK_RightCommand: 0x0010, kVK_Option: 0x0020, kVK_RightOption: 0x0040, kVK_RightControl: 0x2000,
+        ]
+        if Int(keyCode) == kVK_Function { return flags.contains(.function) }
+        if Int(keyCode) == kVK_CapsLock { return flags.contains(.capsLock) }
+        guard let mask = masks[Int(keyCode)] else { return false }
+        return flags.rawValue & mask != 0
+    }
+
     // MARK: Display
 
     /// Modifier symbols in the order macOS menus use: ⌃⌥⇧⌘.
@@ -71,7 +97,10 @@ nonisolated struct RecordingShortcut: Hashable, Codable, Sendable {
     /// Why this shortcut can't be used, or nil when it can.
     var validationError: String? {
         if Self.modifierKeyCodes.contains(Int(keyCode)) {
-            return "Add a key to go with the modifiers."
+            if isModifierOnly { return nil }
+            return modifiers == 0
+                ? "Use Right Control, Right Option, Right Command, Right Shift or fn on its own. The left keys are part of other shortcuts."
+                : "Add a key to go with the modifiers."
         }
         let hasPrimaryModifier = modifiers & UInt32(controlKey | optionKey | cmdKey) != 0
         if !hasPrimaryModifier && !Self.functionKeyCodes.contains(Int(keyCode)) {
@@ -130,6 +159,8 @@ nonisolated struct RecordingShortcut: Hashable, Codable, Sendable {
         kVK_F7: "F7", kVK_F8: "F8", kVK_F9: "F9", kVK_F10: "F10", kVK_F11: "F11", kVK_F12: "F12",
         kVK_F13: "F13", kVK_F14: "F14", kVK_F15: "F15", kVK_F16: "F16", kVK_F17: "F17", kVK_F18: "F18",
         kVK_F19: "F19", kVK_F20: "F20",
+        kVK_RightControl: "Right Control", kVK_RightOption: "Right Option", kVK_RightCommand: "Right Command",
+        kVK_RightShift: "Right Shift", kVK_Function: "fn",
     ]
 
     /// The unmodified character this key produces on the current keyboard

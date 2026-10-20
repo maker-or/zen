@@ -65,12 +65,29 @@ private struct GeneralSettings: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             SettingsSection {
-                SettingsRow("Recording shortcut") {
+                SettingsRow("Recording shortcut", detail: "Hold to talk. Double-tap to talk hands-free.") {
                     ShortcutRecorder()
                 }
                 if let error = hotkey.registrationError {
                     SettingsDivider()
                     SettingsNote(error, systemImage: "exclamationmark.triangle")
+                }
+            }
+
+            SettingsSection {
+                SettingsRow("Show widget when idle") {
+                    Toggle("Show widget when idle", isOn: $state.showsIdleWidget)
+                        .toggleStyle(.switch)
+                        .labelsHidden()
+                }
+                SettingsDivider()
+                SettingsRow("Widget position") {
+                    Picker("Widget position", selection: $state.widgetPosition) {
+                        ForEach(WidgetPosition.allCases) { Text($0.title).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .fixedSize()
                 }
             }
 
@@ -174,8 +191,16 @@ private struct AboutSettings: View {
 
             SettingsSection {
                 SettingsRow("Introduction") {
-                    Button("Replay") { openWindow(id: "onboarding") }
-                        .buttonStyle(.zenCapsule)
+                    Button("Replay") {
+                        // The full introduction, with the handwritten zen and its music.
+                        NSApp.keyWindow?.close()
+                        if let appDelegate = AppDelegate.shared {
+                            appDelegate.showDemoOnboarding()
+                        } else {
+                            openWindow(id: "onboarding")
+                        }
+                    }
+                    .buttonStyle(.zenCapsule)
                 }
                 SettingsDivider()
                 SettingsRow("Your memos") {

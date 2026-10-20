@@ -47,10 +47,10 @@ struct ShortcutRecorder: View {
             }
             .buttonStyle(.plain)
             .animation(.easeOut(duration: 0.15), value: isRecording)
-            .help(isRecording ? "Press a new shortcut, or Esc to cancel" : "Click to change the shortcut")
+            .help(isRecording ? "Press a new shortcut or a right-side modifier like Right Control, or Esc to cancel" : "Click to change the shortcut")
             .accessibilityLabel(isRecording ? "Listening for a new shortcut"
                                 : "Recording shortcut, \(state.recordingShortcut.spokenDescription)")
-            .accessibilityHint("Press a key combination, or Escape to cancel")
+            .accessibilityHint("Press a key combination or a right-side modifier key, or Escape to cancel")
 
             if state.recordingShortcut != .default && !isRecording {
                 Button {
@@ -72,13 +72,13 @@ struct ShortcutRecorder: View {
     private var onboardingControl: some View {
         HStack(spacing: 14) {
             Button(action: capture.toggle) {
-                Text(isRecording ? "\(recordingPrompt)  ·  Esc to cancel" : "Use a different shortcut")
+                Text(isRecording ? "\(recordingPrompt)  ·  Esc to cancel" : "Change shortcut")
             }
             .font(.system(size: 13, design: .rounded))
             .foregroundStyle(isRecording ? OnboardingPalette.foreground : OnboardingPalette.secondary)
             .buttonStyle(.plain)
             .underline(!isRecording)
-            .accessibilityHint("Press a key combination, or Escape to cancel")
+            .accessibilityHint("Press a key combination or a right-side modifier key, or Escape to cancel")
 
             if state.recordingShortcut != .default && !isRecording {
                 Button("Reset to \(RecordingShortcut.default.displayString)") {

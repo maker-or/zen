@@ -1,5 +1,5 @@
 nonisolated enum OnboardingStep: Int, CaseIterable, Identifiable {
-    case welcome, capture, privacy, models, paste, microphone
+    case welcome, privacy, models, paste, microphone, capture
 
     var id: Int { rawValue }
     var next: Self? { Self(rawValue: rawValue + 1) }

@@ -57,6 +57,27 @@ struct ShortcutCaptureChecks {
             try? await Task.sleep(for: .milliseconds(200))
             check(!capture.isCapturing && state.recordingShortcut == chosen, "Escape cancels")
 
+            // 5. A right-side modifier pressed and released alone becomes the shortcut.
+            let rightControlDown = NSEvent.ModifierFlags(rawValue: NSEvent.ModifierFlags.control.rawValue | 0x2000)
+            capture.start()
+            key(.flagsChanged, kVK_RightControl, rightControlDown, window: window)
+            key(.flagsChanged, kVK_RightControl, [], window: window)
+            try? await Task.sleep(for: .milliseconds(200))
+            check(state.recordingShortcut == RecordingShortcut(keyCode: UInt32(kVK_RightControl), modifiers: 0)
+                  && !capture.isCapturing, "Right Control alone saved (\(state.recordingShortcut.displayString))")
+
+            // 6. Left Control alone is rejected; Right Control with a key is a combination.
+            capture.start()
+            key(.flagsChanged, kVK_Control, NSEvent.ModifierFlags(rawValue: NSEvent.ModifierFlags.control.rawValue | 0x0001), window: window)
+            key(.flagsChanged, kVK_Control, [], window: window)
+            try? await Task.sleep(for: .milliseconds(200))
+            check(capture.isCapturing && capture.message != nil, "Left Control alone rejected, still listening")
+            key(.flagsChanged, kVK_RightControl, rightControlDown, window: window)
+            key(.keyDown, kVK_ANSI_D, rightControlDown, window: window)
+            try? await Task.sleep(for: .milliseconds(200))
+            check(state.recordingShortcut == RecordingShortcut(keyCode: UInt32(kVK_ANSI_D), modifiers: UInt32(controlKey)),
+                  "Right Control + D saved as a combination (\(state.recordingShortcut.displayString))")
+
             state.recordingShortcut = .default
             exit(failures == 0 ? 0 : 1)
         }

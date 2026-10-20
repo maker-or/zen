@@ -64,7 +64,7 @@ struct OnboardingView: View {
             guard !Task.isCancelled else { return }
             requestingMicrophone = false
             refreshMicrophoneStatus()
-            if granted { onFinish() }
+            if granted { navigate(to: .capture) }
         }
         .onExitCommand(perform: onFinish)
     }
@@ -91,8 +91,11 @@ struct OnboardingView: View {
                 }
 
                 if step == .capture {
-                    ShortcutRecorder(style: .onboarding)
-                        .onboardingReveal(index: 9)
+                    VStack(alignment: .leading, spacing: 14) {
+                        OnboardingShortcutCheck()
+                        ShortcutRecorder(style: .onboarding)
+                    }
+                    .onboardingReveal(index: 9)
                 }
 
                 if step == .models {
@@ -135,7 +138,7 @@ struct OnboardingView: View {
                 }
 
                 if step == .microphone && (microphoneStatus == .notDetermined || microphoneStatus == .denied) {
-                    Button("Continue without microphone", action: onFinish)
+                    Button("Continue without microphone") { navigate(to: .capture) }
                         .font(.system(size: 13, design: .rounded))
                         .buttonStyle(.plain)
                         .foregroundStyle(OnboardingPalette.secondary)
@@ -169,18 +172,18 @@ struct OnboardingView: View {
                     if requestingMicrophone || (step == .models && isPreparingModel) {
                         ProgressView().controlSize(.mini).tint(OnboardingPalette.background)
                     }
-                    if step == .microphone || step == .models {
+                    if primaryButtonShowsTitle {
                         Text(primaryButtonTitle)
                             .font(.system(size: 13, weight: .semibold, design: .rounded))
                     }
                     if !requestingMicrophone && !(step == .models && isPreparingModel) {
                         Image(systemName: "arrow.right")
-                            .font(.system(size: step == .microphone || step == .models ? 20 : 28, weight: .regular))
+                            .font(.system(size: primaryButtonShowsTitle ? 20 : 28, weight: .regular))
                     }
                 }
                 .foregroundStyle(OnboardingPalette.background)
-                .padding(.horizontal, step == .microphone || step == .models ? 22 : 0)
-                .frame(width: step == .microphone || step == .models ? nil : 56, height: 56)
+                .padding(.horizontal, primaryButtonShowsTitle ? 22 : 0)
+                .frame(width: primaryButtonShowsTitle ? nil : 56, height: 56)
                 .background(OnboardingPalette.accent, in: .capsule)
                 .contentShape(.capsule)
             }
@@ -202,7 +205,7 @@ struct OnboardingView: View {
         case .paste: return "Speak your words.\nWrite them anywhere."
         case .microphone:
             switch microphoneStatus {
-            case .authorized: return "Microphone ready.\nYou’re all set."
+            case .authorized: return "Microphone\nready."
             case .denied: return "Allow microphone\naccess."
             case .restricted: return "Microphone\nunavailable."
             default: return "Enable your\nmicrophone."
@@ -213,7 +216,7 @@ struct OnboardingView: View {
     private var explanation: String {
         switch step {
         case .welcome: return ""
-        case .capture: return "Start and stop recording from any app."
+        case .capture: return "Hold it to talk, let go to paste.\nDouble-tap it to talk hands-free."
         case .privacy: return "Transcribed on this Mac. Never sent anywhere."
         case .models: return ""
         case .paste: return "Your words land where you’re typing."
@@ -239,36 +242,45 @@ struct OnboardingView: View {
             case nil: return preparingModel ? "Preparing…" : "Download & Prepare"
             }
         }
-        if let next = step.next { return "Continue to \(next.navigationTitle)" }
-        switch microphoneStatus {
-        case .notDetermined: return "Enable microphone"
-        case .denied: return "Open System Settings"
-        default: return "Open Zen"
+        if step == .microphone && microphoneNeedsAction {
+            return microphoneStatus == .denied ? "Open System Settings" : "Enable microphone"
         }
+        if let next = step.next { return "Continue to \(next.navigationTitle)" }
+        return "Open Zen"
+    }
+
+    /// The steps that act rather than just move on say what they do.
+    private var primaryButtonShowsTitle: Bool {
+        step == .models || step == .capture || (step == .microphone && microphoneNeedsAction)
+    }
+
+    private var microphoneNeedsAction: Bool {
+        microphoneStatus == .notDetermined || microphoneStatus == .denied
     }
 
     private func advance() {
-        if step == .models {
+        switch step {
+        case .models:
             let model = state.transcriptionModel
             guard service.isModelInstalled(model) else {
                 prepareSelectedModel()
                 return
             }
             service.preloadIfInstalled(model)
-        }
-        // Permission never skips the instructional pages, including on replay.
-        if let next = step.next {
-            navigate(to: next)
-            return
-        }
-        switch microphoneStatus {
-        case .notDetermined:
+        case .microphone where microphoneStatus == .notDetermined:
             requestingMicrophone = true
-        case .denied:
+            return
+        case .microphone where microphoneStatus == .denied:
             if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone") {
                 NSWorkspace.shared.open(url)
             }
+            return
         default:
+            break
+        }
+        if let next = step.next {
+            navigate(to: next)
+        } else {
             onFinish()
         }
     }

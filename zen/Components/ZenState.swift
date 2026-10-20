@@ -2,6 +2,13 @@ import Foundation
 import SwiftUI
 import Combine
 
+/// Where the recording widget sits, centered on the active screen.
+enum WidgetPosition: String, CaseIterable, Identifiable {
+    case top, bottom
+    var id: Self { self }
+    var title: String { self == .top ? "Top" : "Bottom" }
+}
+
 enum TranscriptionState: Equatable {
     case idle
     case recording
@@ -29,8 +36,19 @@ final class ZenState: ObservableObject {
         didSet { defaults.set(isDarkMode, forKey: "isDarkMode") }
     }
 
-    @Published var themeHex: String = ZenTheme.defaultHex {
+    /// Onboarding's burgundy (`OnboardingPalette.background`), so the app
+    /// opens in the same color its introduction ends on.
+    static let defaultThemeHex = "330000"
+
+    @Published var themeHex: String = ZenState.defaultThemeHex {
         didSet { defaults.set(themeHex, forKey: "themeHex") }
+    }
+    /// Keep the small recording widget on screen between recordings.
+    @Published var showsIdleWidget = true {
+        didSet { defaults.set(showsIdleWidget, forKey: "showsIdleWidget") }
+    }
+    @Published var widgetPosition: WidgetPosition = .bottom {
+        didSet { defaults.set(widgetPosition.rawValue, forKey: "widgetPosition") }
     }
     /// Change through `HotkeyManager.setShortcut(_:)` so a shortcut that can't
     /// be registered is never saved.
@@ -49,9 +67,11 @@ final class ZenState: ObservableObject {
         hasCompletedOnboarding = defaults.bool(forKey: "hasCompletedOnboarding")
         autoPasteEnabled = defaults.object(forKey: "autoPasteEnabled") as? Bool ?? true
         isDarkMode = defaults.bool(forKey: "isDarkMode")
-        themeHex = defaults.string(forKey: "themeHex") ?? (isDarkMode ? "191919" : ZenTheme.defaultHex)
+        themeHex = defaults.string(forKey: "themeHex") ?? (isDarkMode ? "191919" : Self.defaultThemeHex)
         transcriptionModel = defaults.string(forKey: "transcriptionModel")
             .flatMap(TranscriptionModel.init(rawValue:)) ?? .voz
+        showsIdleWidget = defaults.object(forKey: "showsIdleWidget") as? Bool ?? true
+        widgetPosition = defaults.string(forKey: "widgetPosition").flatMap(WidgetPosition.init(rawValue:)) ?? .bottom
         recordingShortcut = defaults.data(forKey: "recordingShortcut")
             .flatMap { try? JSONDecoder().decode(RecordingShortcut.self, from: $0) }
             .flatMap { $0.validationError == nil ? $0 : nil } ?? .default

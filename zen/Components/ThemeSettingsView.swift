@@ -2,9 +2,7 @@ import SwiftUI
 import AppKit
 
 struct ZenTheme {
-    /// Onboarding's burgundy (`OnboardingPalette.background`), so the app
-    /// opens in the same color its introduction ends on.
-    static let defaultHex = "330000"
+    static let defaultHex = ZenState.defaultThemeHex
 
     let hex: String
 

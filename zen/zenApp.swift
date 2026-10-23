@@ -206,6 +206,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         hasFinishedLaunching = true
+        Analytics.start()
         startPendingDemoIfReady()
         if state.hasCompletedOnboarding, demoOnboardingSessionID == nil { activateCapture() }
     }

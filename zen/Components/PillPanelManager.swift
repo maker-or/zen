@@ -113,6 +113,7 @@ final class PillPanelManager {
     // MARK: Shortcut
 
     func shortcutPressed() {
+        Analytics.recordActive()
         hideWorkItem?.cancel()
         hideWorkItem = nil
         let status: ShortcutGesture.Status

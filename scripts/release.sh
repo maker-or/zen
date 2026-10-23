@@ -68,9 +68,16 @@ dist="$root/dist"
 derived="$root/build/release"
 step "Building Release (Apple silicon)"
 # Phonon-2's Core ML runtime uses Float16, which isn't available on Intel Macs.
+# The PostHog token stays out of git: take it from the environment or from
+# the ignored Configuration/Secrets.env (POSTHOG_API_KEY=phc_...).
+if [[ -z ${POSTHOG_API_KEY:-} && -f Configuration/Secrets.env ]]; then
+    source Configuration/Secrets.env
+fi
+[[ -n ${POSTHOG_API_KEY:-} ]] || echo "warning: POSTHOG_API_KEY is unset; this build sends no analytics." >&2
+
 xcodebuild -project zen.xcodeproj -scheme zen -configuration Release \
     -destination 'generic/platform=macOS' -derivedDataPath "$derived" ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
-    CODE_SIGNING_ALLOWED=NO -quiet clean build
+    CODE_SIGNING_ALLOWED=NO POSTHOG_API_KEY="${POSTHOG_API_KEY:-}" -quiet clean build
 
 built="$derived/Build/Products/Release/Zen.app"
 [[ -d "$built" ]] || fail "Build product not found at $built"
